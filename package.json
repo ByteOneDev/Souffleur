@@ -1,0 +1,12 @@
+{
+  "name": "prompteur",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Teleprompteur intelligent : suivi vocal du texte, chronometrage et assistance IA",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "bench": "node test/bench.js",
+    "dev": "node scripts/serve.js"
+  }
+}
