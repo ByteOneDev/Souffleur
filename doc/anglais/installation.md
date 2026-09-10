@@ -98,18 +98,53 @@ Three things, two of which break the app if forgotten:
 The French model takes memory inside the WebView. On a tight device, Android
 may kill the app while it loads. It is binary: it either fits or it does not.
 
-To find out, run `npm run dev` on the computer, then open this from the phone,
-on the same network:
+This can be checked **without Android Studio and without building anything**,
+in five minutes.
+
+**1. On the computer**, download the speech model once:
+
+```bash
+mkdir -p models && cd models
+curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+```
+
+**2. Start the server over HTTPS** — and this matters:
+
+```bash
+npm run dev:https
+```
+
+It prints the address to open from the phone. HTTPS is not a refinement: a
+browser only grants microphone access in a "secure context". `localhost` is
+one, `http://192.168.x.x` is not. Over plain HTTP the phone would display the
+page but refuse the microphone, making the test impossible.
+
+**3. On the phone**, connected to the same network, open the printed address:
 
 ```
-http://<computer-local-address>:5173/tools/android-check.html
+https://<computer-local-address>:5173/tools/android-check.html
 ```
+
+The certificate is self-signed, so Chrome will warn you. Tap **Advanced →
+Proceed to the site**. Once only.
+
+**4. Run the five steps** in order, allowing the microphone when asked. The last
+one has you read a sentence aloud — read it at speaking pace, no faster.
 
 The harness measures the device, the WebAssembly engine, the microphone and the
-model load, then has you read a sentence aloud and returns a verdict. It also
-detects the case where the tab is killed for lack of memory: it drops a marker
-before the risky step and reads it back on the next start — a page that does
-not come back is an answer, not a failure.
+model load, then returns a verdict and a report you can copy. It also detects
+the case where the tab is killed for lack of memory: it drops a marker before
+the risky step and reads it back on the next start — a page that does not come
+back is an answer, not a failure.
+
+**What the verdict means**:
+
+- **green** — Vosk fits on this device. The local engine stays the default on
+  Android, and the app works with no network.
+- **amber** — it works but tracking drifts. Retry in a quiet room, microphone
+  close to the mouth, before concluding.
+- **red** — the device cannot take it. Android will need a remote recognition
+  engine.
 
 If the verdict is negative, the app can switch to a remote recognition engine:
 engine selection goes through a single interface, designed for this from the

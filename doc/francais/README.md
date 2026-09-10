@@ -1,4 +1,4 @@
-# Documentation — Prompteur
+# Documentation — Souffleur
 
 Un téléprompteur qui suit votre voix dans votre propre texte : le mot en cours
 s'éclaire, le texte défile seul, et le chronomètre dit en continu si vous êtes

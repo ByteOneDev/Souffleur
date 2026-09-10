@@ -1,6 +1,6 @@
 {
-  "appId": "fr.prompteur.app",
-  "appName": "Prompteur",
+  "appId": "fr.souffleur.app",
+  "appName": "Souffleur",
   "webDir": "www",
   "android": {
     "allowMixedContent": false

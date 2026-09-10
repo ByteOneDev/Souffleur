@@ -1,4 +1,4 @@
-# Documentation — Prompteur
+# Documentation — Souffleur
 
 A teleprompter that follows your voice through your own text: the current word
 lights up, the text scrolls by itself, and the timer tells you continuously

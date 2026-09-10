@@ -1,15 +1,24 @@
-# Prompteur intelligent
+# Souffleur
 
 📖 **[Documentation en français](doc/francais/)** · **[Documentation in English](doc/anglais/)**
 
-Téléprompteur qui suit la voix de l'orateur dans son propre texte : le mot en
-cours s'éclaire, le texte défile seul, et le chronométrage dit en continu si
-l'on est en avance ou en retard.
+Au théâtre, le souffleur suit le texte pendant que les comédiens jouent, et
+donne la réplique à celui qui perd le fil. C'est exactement ce que fait ce
+logiciel : il suit votre voix dans votre propre texte, éclaire le mot en cours,
+fait défiler tout seul, et vous dit en continu si vous êtes en avance ou en
+retard.
 
-Ce dépôt contient pour l'instant **le spike**, pas l'application. Son unique
-but : établir si le suivi vocal est assez fiable pour qu'on construise dessus.
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run app      # application de bureau
+```
 
-## Ce que le spike établit
+📖 Pour l'utilisation, l'installation et le fonctionnement détaillés, voir la
+**[documentation](doc/)**, disponible en français et en anglais. Ce qui suit
+résume les décisions techniques et leurs mesures.
+
+## Le pari technique, et sa vérification
 
 Le suivi n'est pas un problème de dictée. Le texte est connu d'avance, donc la
 question n'est pas « qu'a dit l'orateur ? » mais « où en est-il ? ». On compare
@@ -205,10 +214,16 @@ c'est précisément pour ça que l'adaptateur existe.
 stockée localement : pas de backend à héberger, pas de coût de fonctionnement,
 pas de clé partagée dans un binaire distribué.
 
-## Suite
+## État et suite
 
-Le pari technique est levé ; l'application reste à construire :
-éditeur riche et persistance des discours, découpage par sections avec durée
-cible, fonctions IA (réécriture pour l'oral, ajustement à une durée, fiches de
-secours), analyse de répétition, empaquetage Electron puis Capacitor, et
-télécommande depuis le téléphone.
+Fait : le moteur d'alignement et ses mesures, le prompteur avec annotations,
+chronométrage et verrouillage, la bibliothèque de discours, la charte graphique
+en deux thèmes, l'application de bureau et le projet Android.
+
+Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est le seul
+risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
+la [documentation d'installation](doc/francais/installation.md)).
+
+À venir : découpage par sections avec durée cible, fonctions IA (réécriture pour
+l'oral, ajustement à une durée, fiches de secours), analyse de répétition,
+import de documents, et télécommande depuis le téléphone.

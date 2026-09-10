@@ -99,18 +99,54 @@ Le modèle français occupe de la mémoire dans la WebView. Sur un appareil un p
 juste, Android peut fermer l'application au moment du chargement. C'est binaire :
 ça passe ou ça ne passe pas.
 
-Pour le savoir, lancez `npm run dev` sur l'ordinateur, puis ouvrez depuis le
-téléphone, sur le même réseau :
+Cela se vérifie **sans Android Studio et sans rien compiler**, en cinq minutes.
+
+**1. Sur l'ordinateur**, téléchargez le modèle vocal une fois :
+
+```bash
+mkdir -p models && cd models
+curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+```
+
+**2. Lancez le serveur en HTTPS** — et c'est important :
+
+```bash
+npm run dev:https
+```
+
+Il affiche l'adresse à ouvrir depuis le téléphone. Le HTTPS n'est pas un
+raffinement : un navigateur ne donne accès au micro que dans un « contexte
+sécurisé ». `localhost` en est un, `http://192.168.x.x` non. En clair, sur du
+HTTP le téléphone afficherait la page mais refuserait le micro, et le test
+serait impossible.
+
+**3. Sur le téléphone**, connecté au même réseau, ouvrez l'adresse affichée :
 
 ```
-http://<adresse-locale-de-l-ordinateur>:5173/tools/android-check.html
+https://<adresse-locale-de-l-ordinateur>:5173/tools/android-check.html
 ```
+
+Le certificat est auto-signé : Chrome affichera un avertissement. Touchez
+**Paramètres avancés → Continuer vers le site**. À faire une seule fois.
+
+**4. Déroulez les cinq étapes** dans l'ordre, en autorisant le micro quand il
+le demande. La dernière vous fait lire une phrase à voix haute — lisez-la au
+rythme d'un discours, pas plus vite.
 
 Le banc mesure l'appareil, le moteur WebAssembly, le micro, le chargement du
-modèle, puis vous fait lire une phrase à voix haute et rend un verdict. Il
-détecte aussi le cas où l'onglet est fermé par manque de mémoire : il pose un
-repère avant l'étape risquée et le relit au démarrage suivant — une page qui ne
-revient pas est une réponse, pas une panne.
+modèle, puis rend un verdict et un rapport que vous pouvez copier. Il détecte
+aussi le cas où l'onglet est fermé par manque de mémoire : il pose un repère
+avant l'étape risquée et le relit au démarrage suivant — une page qui ne revient
+pas est une réponse, pas une panne.
+
+**Ce que le verdict signifie** :
+
+- **vert** — Vosk tient sur cet appareil. Le moteur local reste le choix par
+  défaut sur Android, et l'application fonctionne sans réseau.
+- **orange** — ça fonctionne mais le suivi décroche. À rejouer au calme, micro
+  près de la bouche, avant de conclure.
+- **rouge** — l'appareil ne suit pas. Il faudra un moteur de reconnaissance
+  distant sur Android.
 
 Si le verdict est négatif, l'application peut basculer vers un moteur de
 reconnaissance distant : le choix du moteur passe par une interface unique,

@@ -37,8 +37,6 @@
 
     <!-- Permissions -->
 
-    <!-- Le telechargement du modele vocal, une seule fois. Ensuite l'application
-         fonctionne sans reseau. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Le micro est le coeur de l'outil : sans cette declaration, la WebView
@@ -48,4 +46,5 @@
     <!-- Non requis a l'installation : sans micro l'application reste utilisable
          en defilement manuel, il n'y a pas de raison d'exclure un appareil. -->
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
 </manifest>

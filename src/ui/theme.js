@@ -4,7 +4,7 @@
  * « Automatique » suit la preference du systeme et continue de la suivre si
  * elle change en cours de session. Un choix explicite l'emporte et se retient.
  */
-const KEY = 'prompteur.theme';
+const KEY = 'souffleur.theme';
 export const THEMES = ['auto', 'clair', 'sombre'];
 
 const attribute = { clair: 'light', sombre: 'dark' };

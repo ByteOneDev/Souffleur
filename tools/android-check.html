@@ -112,7 +112,7 @@ function rows(target, data) {
 // Une etape en cours est marquee avant de commencer et effacee a la fin. Si on
 // la retrouve au chargement suivant, c'est que l'onglet est mort en route :
 // c'est precisement le symptome d'un depassement memoire sur Android.
-const PENDING = 'vosk-check-pending';
+const PENDING = 'souffleur-vosk-check';
 const pending = localStorage.getItem(PENDING);
 if (pending) {
   $('#s-crash').hidden = false;

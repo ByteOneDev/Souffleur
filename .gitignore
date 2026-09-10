@@ -6,3 +6,4 @@ models/
 .DS_Store
 vendor/
 www/
+.certs/

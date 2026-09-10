@@ -1,4 +1,4 @@
-package fr.prompteur.app;
+package fr.souffleur.app;
 
 import com.getcapacitor.BridgeActivity;
 

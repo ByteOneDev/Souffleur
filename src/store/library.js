@@ -9,7 +9,7 @@
  * pourra passer a un fichier ou une base sans etre reecrite.
  */
 
-const KEY = 'prompteur.bibliotheque.v1';
+const KEY = 'souffleur.bibliotheque.v1';
 
 /** Stockage en memoire, utilise par les tests et comme repli. */
 export function memoryStorage(initial = {}) {
@@ -24,7 +24,7 @@ export function memoryStorage(initial = {}) {
 /** Le stockage du navigateur peut etre refuse (navigation privee, reglages). */
 export function defaultStorage() {
   try {
-    const probe = '__prompteur__';
+    const probe = '__souffleur__';
     globalThis.localStorage.setItem(probe, '1');
     globalThis.localStorage.removeItem(probe);
     return globalThis.localStorage;

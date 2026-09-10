@@ -26,7 +26,7 @@ function createWindow() {
     height: 860,
     minWidth: 720,
     minHeight: 520,
-    title: 'Prompteur',
+    title: 'Souffleur',
     // Le fond de la fenetre suit le theme : sinon la fenetre s'ouvre sur un
     // aplat de la mauvaise couleur avant que la page ne s'affiche.
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#121316' : '#f3efe6',
