@@ -10,23 +10,38 @@ import { EventEmitter } from './adapter.js';
  * Precision brute moyenne — sans importance ici : on n'attend pas une dictee
  * exacte, seulement assez de mots reconnus pour se reperer dans un texte connu.
  */
-const VOSK_CDN = 'https://cdn.jsdelivr.net/npm/vosk-browser@0.0.8/dist/vosk.js';
+// La bibliotheque est servie depuis le projet, jamais depuis un CDN : son
+// binaire WebAssembly (3 Mo) y est embarque en data-URI et n'effectue aucun
+// appel reseau a l'execution. C'est ce qui rend le fonctionnement hors ligne
+// reel, et non seulement annonce.
+const VOSK_SCRIPT = 'node_modules/vosk-browser/dist/vosk.js';
 const SAMPLE_RATE = 16000;
+// Un modele introuvable laisse createModel en attente indefiniment, sans
+// erreur : sans cette borne, l'application gele au demarrage sans un mot.
+const MODEL_TIMEOUT_MS = 90000;
 
 let voskLibrary = null;
 
-async function loadVosk() {
+async function loadVosk(scriptUrl) {
   if (voskLibrary) return voskLibrary;
   if (globalThis.Vosk) return (voskLibrary = globalThis.Vosk);
   await new Promise((resolve, reject) => {
     const script = document.createElement('script');
-    script.src = VOSK_CDN;
+    script.src = scriptUrl;
     script.onload = resolve;
-    script.onerror = () => reject(new Error('Chargement de vosk-browser impossible.'));
+    script.onerror = () => reject(new Error(`Bibliotheque Vosk introuvable (${scriptUrl}).`));
     document.head.appendChild(script);
   });
   if (!globalThis.Vosk) throw new Error('vosk-browser charge mais absent de window.');
   return (voskLibrary = globalThis.Vosk);
+}
+
+/** Borne une promesse qui pourrait ne jamais se resoudre. */
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
 }
 
 export class VoskEngine extends EventEmitter {
@@ -37,12 +52,13 @@ export class VoskEngine extends EventEmitter {
     return typeof window !== 'undefined' && typeof window.AudioContext !== 'undefined';
   }
 
-  /** @param {{modelUrl?: string}} options chemin du modele .tar.gz ou .zip */
-  constructor({ modelUrl = 'models/vosk-model-small-fr-0.22.tar.gz' } = {}) {
+  /** @param {{modelUrl?: string, scriptUrl?: string}} options */
+  constructor({ modelUrl = 'models/vosk-model-small-fr-0.22.tar.gz', scriptUrl = VOSK_SCRIPT } = {}) {
     super();
     this.id = VoskEngine.id;
     this.label = VoskEngine.label;
     this.modelUrl = modelUrl;
+    this.scriptUrl = scriptUrl;
     this.model = null;
     this.recognizer = null;
     this.audio = null;
@@ -51,10 +67,20 @@ export class VoskEngine extends EventEmitter {
 
   async start() {
     this.emit('state', 'loading');
-    const Vosk = await loadVosk();
+    const Vosk = await loadVosk(this.scriptUrl);
 
     if (!this.model) {
-      this.model = await Vosk.createModel(this.modelUrl);
+      // Verifier l'adresse d'abord : createModel ne rejette pas sur une URL
+      // invalide, il reste en attente et signale l'echec dans son worker.
+      const head = await fetch(this.modelUrl, { method: 'HEAD' }).catch(() => null);
+      if (!head?.ok) {
+        throw new Error(`Modele vocal introuvable (${this.modelUrl}). Voir README, section « Essayer ».`);
+      }
+      this.model = await withTimeout(
+        Vosk.createModel(this.modelUrl),
+        MODEL_TIMEOUT_MS,
+        `Modele vocal illisible (${this.modelUrl}).`,
+      );
     }
     const recognizer = new this.model.KaldiRecognizer(SAMPLE_RATE);
     recognizer.setWords(true);

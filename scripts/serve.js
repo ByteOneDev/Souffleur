@@ -14,6 +14,8 @@ const TYPES = {
   '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.gz': 'application/gzip',
+  '.wasm': 'application/wasm',
+  '.zip': 'application/zip',
 };
 
 createServer(async (request, response) => {
@@ -21,12 +23,9 @@ createServer(async (request, response) => {
   const file = join(ROOT, normalize(path === '/' ? '/index.html' : path).replace(/^(\.\.[/\\])+/, ''));
   try {
     const body = await readFile(file);
-    response.writeHead(200, {
-      'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
-      // Requis par certains moteurs WebAssembly threades.
-      'cross-origin-opener-policy': 'same-origin',
-      'cross-origin-embedder-policy': 'require-corp',
-    });
+    // Pas d'isolation cross-origin : le build WebAssembly de Vosk n'utilise pas
+    // SharedArrayBuffer (verifie), et COEP bloquerait les ressources tierces.
+    response.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
     response.end(body);
   } catch {
     response.writeHead(404).end('Introuvable');

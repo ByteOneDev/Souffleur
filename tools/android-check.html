@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vosk sur Android — banc de vérification</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#262b36; --text:#e8eaed; --muted:#8b93a3;
+          --ok:#59d99a; --ko:#ff7b72; --warn:#ffd166; --accent:#5ea9ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); padding:16px 16px 60px;
+         font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  h1 { font-size:19px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin:0 0 20px; }
+  .step { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px; }
+  .step h2 { font-size:14px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  .badge { width:22px; height:22px; border-radius:50%; background:var(--line); color:var(--muted);
+           display:grid; place-items:center; font-size:12px; flex:none; }
+  .step[data-state=ok] .badge { background:var(--ok); color:#05070c; }
+  .step[data-state=ko] .badge { background:var(--ko); color:#05070c; }
+  .step[data-state=warn] .badge { background:var(--warn); color:#05070c; }
+  .step[data-state=run] .badge { background:var(--accent); color:#05070c; }
+  dl { margin:10px 0 0; font-size:13px; }
+  dl div { display:flex; justify-content:space-between; gap:12px; padding:3px 0; border-bottom:1px solid var(--line); }
+  dt { color:var(--muted); } dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+  button { width:100%; padding:13px; margin-top:10px; border-radius:8px; border:none;
+           background:var(--accent); color:#05070c; font:600 15px system-ui; cursor:pointer; }
+  button:disabled { background:var(--line); color:var(--muted); }
+  button.ghost { background:transparent; border:1px solid var(--line); color:var(--text); font-weight:400; }
+  input { width:100%; padding:10px; border-radius:8px; border:1px solid var(--line);
+          background:#0c0e13; color:var(--text); font:inherit; }
+  .msg { font-size:13px; color:var(--muted); margin-top:8px; }
+  .msg.ko { color:var(--ko); } .msg.ok { color:var(--ok); } .msg.warn { color:var(--warn); }
+  #phrase { font-size:22px; line-height:1.5; margin:14px 0; }
+  #phrase span.said { color:var(--ok); } #phrase span.current { background:rgba(255,209,102,.2); border-radius:3px; }
+  #verdict { font-size:16px; font-weight:600; padding:14px; border-radius:10px; text-align:center; }
+  #verdict[data-v=ok] { background:rgba(89,217,154,.15); color:var(--ok); }
+  #verdict[data-v=ko] { background:rgba(255,123,114,.15); color:var(--ko); }
+  #verdict[data-v=warn] { background:rgba(255,209,102,.15); color:var(--warn); }
+  pre { background:#0c0e13; border:1px solid var(--line); border-radius:8px; padding:10px;
+        font-size:11px; overflow-x:auto; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Vosk sur Android</h1>
+<p class="sub">Cinq minutes pour savoir si la reconnaissance vocale hors ligne tient sur cet appareil.
+Aucune donnée ne sort du téléphone.</p>
+
+<div class="step" id="s-crash" hidden>
+  <h2><span class="badge">!</span> Session précédente interrompue</h2>
+  <p class="msg ko" id="crash-detail"></p>
+</div>
+
+<div class="step" id="s-env" data-state="run">
+  <h2><span class="badge">1</span> Appareil et navigateur</h2>
+  <dl id="env"></dl>
+</div>
+
+<div class="step" id="s-wasm">
+  <h2><span class="badge">2</span> Moteur WebAssembly</h2>
+  <dl id="wasm"></dl>
+  <button id="run-wasm">Tester le moteur</button>
+</div>
+
+<div class="step" id="s-mic">
+  <h2><span class="badge">3</span> Microphone</h2>
+  <dl id="mic"></dl>
+  <button id="run-mic">Autoriser et tester le micro</button>
+</div>
+
+<div class="step" id="s-model">
+  <h2><span class="badge">4</span> Modèle français (~50 Mo)</h2>
+  <p class="msg">C'est l'étape décisive : si l'appareil manque de mémoire, l'onglet se fermera ici.
+  Le banc s'en souviendra au redémarrage.</p>
+  <input id="model-url" value="../models/vosk-model-small-fr-0.22.zip">
+  <button id="run-model">Charger le modèle</button>
+  <dl id="model"></dl>
+</div>
+
+<div class="step" id="s-reco">
+  <h2><span class="badge">5</span> Lecture réelle</h2>
+  <p class="msg">Lisez cette phrase à voix haute, au rythme d'un discours.</p>
+  <div id="phrase"></div>
+  <dl id="reco"></dl>
+  <button id="run-reco" disabled>Commencer la lecture</button>
+</div>
+
+<div class="step">
+  <h2><span class="badge">✓</span> Verdict</h2>
+  <div id="verdict" data-v="">Les étapes ne sont pas terminées.</div>
+  <button class="ghost" id="copy">Copier le rapport</button>
+  <pre id="report" hidden></pre>
+</div>
+
+<script type="module">
+import { tokenize } from '../src/align/tokenize.js';
+import { Aligner } from '../src/align/aligner.js';
+
+const PHRASE = "Mesdames, messieurs, je vous remercie de votre attention "
+  + "et je voudrais commencer par une évidence que nous avons collectivement oubliée.";
+
+const results = { debut: new Date().toISOString() };
+const $ = (s) => document.querySelector(s);
+const setState = (id, state) => { $(id).dataset.state = state; };
+
+function rows(target, data) {
+  $(target).innerHTML = Object.entries(data)
+    .map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+}
+
+// --- Detection d'un onglet tue par manque de memoire ------------------------
+// Une etape en cours est marquee avant de commencer et effacee a la fin. Si on
+// la retrouve au chargement suivant, c'est que l'onglet est mort en route :
+// c'est precisement le symptome d'un depassement memoire sur Android.
+const PENDING = 'vosk-check-pending';
+const pending = localStorage.getItem(PENDING);
+if (pending) {
+  $('#s-crash').hidden = false;
+  $('#crash-detail').textContent =
+    `L'onglet s'est arrêté pendant l'étape « ${pending} ». Sur Android, c'est le signe `
+    + `d'un manque de mémoire : le système a tué la page. C'est une réponse, pas une panne.`;
+  results.plantagePrecedent = pending;
+  localStorage.removeItem(PENDING);
+}
+const begin = (label) => localStorage.setItem(PENDING, label);
+const done = () => localStorage.removeItem(PENDING);
+
+// --- 1. Environnement -------------------------------------------------------
+const ua = navigator.userAgent;
+const chrome = ua.match(/Chrome\/(\d+)/)?.[1];
+const env = {
+  'Système': /Android/.test(ua) ? (ua.match(/Android [\d.]+/)?.[0] ?? 'Android') : 'pas Android',
+  'Contexte': /\bwv\b/.test(ua) ? 'WebView (app)' : 'Navigateur',
+  'Moteur Chrome': chrome ?? 'inconnu',
+  'Mémoire annoncée': navigator.deviceMemory ? `${navigator.deviceMemory} Go` : 'non communiquée',
+  'Cœurs': navigator.hardwareConcurrency ?? '?',
+  'Origine sécurisée': window.isSecureContext ? 'oui' : 'NON — micro refusé',
+};
+rows('#env', env);
+Object.assign(results, { environnement: env, ua });
+setState('#s-env', window.isSecureContext && /Android/.test(ua) ? 'ok'
+  : window.isSecureContext ? 'warn' : 'ko');
+
+// --- 2. WebAssembly ---------------------------------------------------------
+$('#run-wasm').addEventListener('click', async () => {
+  setState('#s-wasm', 'run');
+  const data = {};
+  try {
+    const t0 = performance.now();
+    await new Promise((ok, ko) => {
+      const s = document.createElement('script');
+      s.src = '../node_modules/vosk-browser/dist/vosk.js';
+      s.onload = ok; s.onerror = () => ko(new Error('bibliothèque introuvable'));
+      document.head.appendChild(s);
+    });
+    data['Bibliothèque chargée'] = `${Math.round(performance.now() - t0)} ms`;
+    data['API disponible'] = typeof Vosk?.createModel === 'function' ? 'oui' : 'NON';
+
+    // Le moteur alloue 16 Mo au demarrage et grandit jusqu'a 2 Go maximum.
+    const probe = new WebAssembly.Memory({ initial: 256, maximum: 2048 });
+    data['Allocation de 16 Mo'] = probe.buffer.byteLength / 1048576 + ' Mo';
+    probe.grow(256);
+    data['Croissance à 32 Mo'] = probe.buffer.byteLength / 1048576 + ' Mo';
+    setState('#s-wasm', typeof Vosk?.createModel === 'function' ? 'ok' : 'ko');
+  } catch (error) {
+    data['Erreur'] = String(error).slice(0, 90);
+    setState('#s-wasm', 'ko');
+  }
+  rows('#wasm', data);
+  results.webassembly = data;
+});
+
+// --- 3. Microphone ----------------------------------------------------------
+let micStream = null;
+$('#run-mic').addEventListener('click', async () => {
+  setState('#s-mic', 'run');
+  const data = {};
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+    });
+    const track = micStream.getAudioTracks()[0];
+    const settings = track.getSettings();
+    data['Autorisation'] = 'accordée';
+    data['Micro'] = track.label || 'sans nom';
+    data['Échantillonnage'] = `${settings.sampleRate ?? '?'} Hz`;
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    data['AudioContext'] = `${context.sampleRate} Hz`;
+    data['AudioWorklet'] = context.audioWorklet ? 'disponible' : 'absent';
+    await context.close();
+    setState('#s-mic', 'ok');
+  } catch (error) {
+    data['Erreur'] = String(error.name || error).slice(0, 90);
+    setState('#s-mic', 'ko');
+  }
+  rows('#mic', data);
+  results.micro = data;
+});
+
+// --- 4. Modele --------------------------------------------------------------
+let model = null;
+$('#run-model').addEventListener('click', async () => {
+  setState('#s-model', 'run');
+  begin('chargement du modèle vocal');
+  const data = { 'État': 'téléchargement…' };
+  rows('#model', data);
+  const before = performance.memory?.usedJSHeapSize ?? null;
+  const url = $('#model-url').value.trim();
+  const t0 = performance.now();
+  try {
+    // createModel ne rejette jamais sur une URL invalide : il reste en attente
+    // et lache une erreur dans son worker. On verifie donc l'adresse d'abord,
+    // pour repondre tout de suite au lieu d'attendre dans le vide.
+    const head = await fetch(url, { method: 'HEAD' }).catch(() => null);
+    if (!head || !head.ok) throw new Error(`modèle introuvable à cette adresse (${head?.status ?? 'réseau'})`);
+    const taille = Number(head.headers.get('content-length') || 0);
+    if (taille) data['Taille du modèle'] = `${(taille / 1048576).toFixed(1)} Mo`;
+
+    // Une erreur non rattrapee du worker doit faire echouer l'etape, pas geler.
+    const workerFailure = new Promise((_, ko) => {
+      window.addEventListener('error', (e) => ko(new Error(e.message?.slice(0, 90) ?? 'erreur du moteur')), { once: true });
+      window.addEventListener('unhandledrejection', (e) => ko(new Error(String(e.reason).slice(0, 90))), { once: true });
+    });
+    model = await Promise.race([
+      Vosk.createModel(url),
+      workerFailure,
+      new Promise((_, ko) => setTimeout(() => ko(new Error('aucune réponse après 3 minutes')), 180000)),
+    ]);
+    data['État'] = 'prêt';
+    data['Durée de chargement'] = `${((performance.now() - t0) / 1000).toFixed(1)} s`;
+    if (performance.memory) {
+      data['Tas JS avant'] = `${(before / 1048576).toFixed(0)} Mo`;
+      data['Tas JS après'] = `${(performance.memory.usedJSHeapSize / 1048576).toFixed(0)} Mo`;
+      data['Plafond du tas'] = `${(performance.memory.jsHeapSizeLimit / 1048576).toFixed(0)} Mo`;
+    }
+    setState('#s-model', 'ok');
+    $('#run-reco').disabled = false;
+  } catch (error) {
+    data['État'] = 'échec';
+    data['Erreur'] = String(error.message || error).slice(0, 120);
+    setState('#s-model', 'ko');
+  }
+  done();
+  rows('#model', data);
+  results.modele = data;
+});
+
+// --- 5. Reconnaissance et alignement reels ---------------------------------
+const tokens = tokenize(PHRASE);
+$('#phrase').innerHTML = tokens
+  .map((t, i) => `<span data-i="${i}">${PHRASE.slice(t.start, t.end)}</span>`)
+  .join(' ');
+
+$('#run-reco').addEventListener('click', async () => {
+  setState('#s-reco', 'run');
+  begin('reconnaissance vocale en direct');
+  $('#run-reco').disabled = true;
+  const aligner = new Aligner(tokens, { profile: 'lecture' });
+  const data = { 'État': 'à vous — lisez la phrase' };
+  rows('#reco', data);
+
+  const recognizer = new model.KaldiRecognizer(16000);
+  recognizer.setWords(true);
+  const t0 = performance.now();
+  let firstWordMs = null;
+
+  const paint = () => {
+    for (const span of $('#phrase').querySelectorAll('span')) {
+      const i = Number(span.dataset.i);
+      span.classList.toggle('said', i < aligner.cursor);
+      span.classList.toggle('current', i === aligner.cursor);
+    }
+  };
+  const consume = (text) => {
+    if (!text) return;
+    aligner.push(text);
+    if (firstWordMs === null && aligner.cursor >= 0) firstWordMs = Math.round(performance.now() - t0);
+    paint();
+    data['Mots suivis'] = `${aligner.cursor + 1} / ${tokens.length}`;
+    data['Confiance'] = aligner.confidence.toFixed(2);
+    rows('#reco', data);
+  };
+  recognizer.on('result', (m) => consume(m?.result?.text));
+  recognizer.on('partialresult', (m) => consume(m?.result?.partial));
+
+  const context = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+  const source = context.createMediaStreamSource(micStream);
+  const processor = context.createScriptProcessor(4096, 1, 1);
+  processor.onaudioprocess = (event) => {
+    try { recognizer.acceptWaveform(event.inputBuffer); } catch { /* bloc ignore */ }
+  };
+  source.connect(processor); processor.connect(context.destination);
+
+  // 45 secondes suffisent largement pour la phrase ; on arrete des la fin.
+  const finish = async () => {
+    clearInterval(watchdog);
+    processor.disconnect(); source.disconnect(); await context.close();
+    const covered = (aligner.cursor + 1) / tokens.length;
+    data['État'] = 'terminé';
+    data['Couverture'] = `${Math.round(covered * 100)} %`;
+    data['Latence du 1er mot'] = firstWordMs === null ? 'aucun mot reconnu' : `${firstWordMs} ms`;
+    rows('#reco', data);
+    setState('#s-reco', covered > 0.9 ? 'ok' : covered > 0.5 ? 'warn' : 'ko');
+    results.reconnaissance = data;
+    done();
+    verdict();
+  };
+  const started = Date.now();
+  const watchdog = setInterval(() => {
+    if (aligner.cursor >= tokens.length - 1 || Date.now() - started > 45000) finish();
+  }, 500);
+});
+
+// --- Verdict ----------------------------------------------------------------
+function verdict() {
+  const box = $('#verdict');
+  const states = ['#s-wasm', '#s-mic', '#s-model', '#s-reco'].map((id) => $(id).dataset.state);
+  const couverture = parseInt(results.reconnaissance?.['Couverture'] ?? '0', 10);
+  if (states.includes('ko')) {
+    box.dataset.v = 'ko';
+    box.textContent = 'Vosk ne tient pas sur cet appareil. Il faudra un moteur vocal distant sur Android.';
+  } else if (couverture >= 90) {
+    box.dataset.v = 'ok';
+    box.textContent = `Vosk tient sur cet appareil : ${couverture} % de la phrase suivie, hors ligne. `
+      + `Le moteur local peut rester le choix par défaut sur Android.`;
+  } else {
+    box.dataset.v = 'warn';
+    box.textContent = `Ça fonctionne mais le suivi décroche (${couverture} %). `
+      + `À rejouer au calme, micro près de la bouche, avant de trancher.`;
+  }
+  results.verdict = box.textContent;
+  $('#report').hidden = false;
+  $('#report').textContent = JSON.stringify(results, null, 2);
+}
+
+$('#copy').addEventListener('click', async () => {
+  verdict();
+  const text = JSON.stringify(results, null, 2);
+  try { await navigator.clipboard.writeText(text); $('#copy').textContent = 'Rapport copié'; }
+  catch { $('#report').hidden = false; $('#copy').textContent = 'Copie refusée — sélectionnez le texte'; }
+});
+</script>
+</body>
+</html>

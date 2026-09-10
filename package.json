@@ -7,6 +7,10 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "bench": "node test/bench.js",
-    "dev": "node scripts/serve.js"
+    "dev": "node scripts/serve.js",
+    "check:android": "node scripts/serve.js"
+  },
+  "dependencies": {
+    "vosk-browser": "0.0.8"
   }
 }
