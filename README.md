@@ -1,4 +1,6 @@
-# Prompteur intelligent — spike d'alignement vocal
+# Prompteur intelligent
+
+📖 **[Documentation en français](doc/francais/)** · **[Documentation in English](doc/anglais/)**
 
 Téléprompteur qui suit la voix de l'orateur dans son propre texte : le mot en
 cours s'éclaire, le texte défile seul, et le chronométrage dit en continu si
@@ -140,6 +142,7 @@ src/store/    bibliothèque des discours (stockage injecté)
 src/ui/       charte, thèmes, polices, assemblage de l'interface
 test/         tests, banc de mesure et test de rupture
 tools/        banc de vérification de Vosk sur un appareil Android
+doc/          documentation, en français et en anglais
 ```
 
 Aucune dépendance d'exécution, aucune étape de compilation : du JavaScript
@@ -158,9 +161,10 @@ npm run app        # lance l'application de bureau
 npm run android    # assemble et ouvre le projet dans Android Studio
 ```
 
-Voir **[docs/android.md](docs/android.md)** pour l'explication complète : ce que
-fait chaque outil, comment compiler sur votre machine, comment donner
-l'application à des amis, et ce que la question Vosk implique concrètement.
+Voir **[doc/francais/installation.md](doc/francais/installation.md)** pour
+l'explication complète : ce que fait chaque outil, comment compiler sur votre
+machine, comment donner l'application à des proches, et ce que la question Vosk
+implique concrètement.
 
 ## Décisions d'architecture
 
