@@ -4,3 +4,5 @@ out/
 models/
 *.log
 .DS_Store
+vendor/
+www/

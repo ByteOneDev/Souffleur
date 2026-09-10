@@ -8,10 +8,21 @@
     "test": "node --test test/*.test.js",
     "bench": "node test/bench.js",
     "dev": "node scripts/serve.js",
-    "check:android": "node scripts/serve.js"
+    "vendor": "node scripts/vendor.js",
+    "postinstall": "node scripts/vendor.js",
+    "app": "electron .",
+    "build": "node scripts/build.js",
+    "android": "node scripts/build.js && npx cap sync android && npx cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "vosk-browser": "0.0.8"
-  }
+  },
+  "devDependencies": {
+    "electron": "^44.3.0"
+  },
+  "main": "electron/main.js"
 }

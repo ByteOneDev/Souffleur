@@ -14,7 +14,7 @@ import { EventEmitter } from './adapter.js';
 // binaire WebAssembly (3 Mo) y est embarque en data-URI et n'effectue aucun
 // appel reseau a l'execution. C'est ce qui rend le fonctionnement hors ligne
 // reel, et non seulement annonce.
-const VOSK_SCRIPT = 'node_modules/vosk-browser/dist/vosk.js';
+const VOSK_SCRIPT = 'vendor/vosk/vosk.js';
 const SAMPLE_RATE = 16000;
 // Un modele introuvable laisse createModel en attente indefiniment, sans
 // erreur : sans cette borne, l'application gele au demarrage sans un mot.

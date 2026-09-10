@@ -14,6 +14,7 @@ import { Aligner } from '../align/aligner.js';
 import { availableEngines, createEngine } from '../stt/index.js';
 import { Library, countWords, estimateSeconds } from '../store/library.js';
 import { readTheme, applyTheme, saveTheme, nextTheme } from './theme.js';
+import { garderEcranAllume, libererEcran } from './wakelock.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -225,6 +226,9 @@ async function start() {
   state.engine = engine;
   state.running = true;
   state.startedAt = Date.now();
+  // Sur telephone comme sur portable, l'ecran ne doit pas s'eteindre en plein
+  // discours parce que personne n'a touche le clavier depuis deux minutes.
+  garderEcranAllume();
   $('#toggle').textContent = 'Arrêter';
   document.body.classList.add('running');
   updateStats();
@@ -233,6 +237,7 @@ async function start() {
 async function stop() {
   if (!state.running) return;
   state.running = false;
+  await libererEcran();
   await state.engine?.stop();
   state.engine = null;
   $('#toggle').textContent = 'Démarrer';

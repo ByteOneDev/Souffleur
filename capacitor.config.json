@@ -1,0 +1,11 @@
+{
+  "appId": "fr.prompteur.app",
+  "appName": "Prompteur",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

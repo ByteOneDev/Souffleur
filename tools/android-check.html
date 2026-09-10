@@ -149,7 +149,7 @@ $('#run-wasm').addEventListener('click', async () => {
     const t0 = performance.now();
     await new Promise((ok, ko) => {
       const s = document.createElement('script');
-      s.src = '../node_modules/vosk-browser/dist/vosk.js';
+      s.src = '../vendor/vosk/vosk.js';
       s.onload = ok; s.onerror = () => ko(new Error('bibliothèque introuvable'));
       document.head.appendChild(s);
     });

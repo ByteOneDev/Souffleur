@@ -145,6 +145,23 @@ tools/        banc de vérification de Vosk sur un appareil Android
 Aucune dépendance d'exécution, aucune étape de compilation : du JavaScript
 standard, exécutable directement par le navigateur et par Node.
 
+## Plateformes
+
+| Cible | Enveloppe | État |
+|---|---|---|
+| macOS, Windows, Linux | Electron | fenêtre verrouillée, vérifiée au lancement |
+| Android | Capacitor | projet généré, micro et écran réglés — reste à compiler |
+| iOS | Capacitor | écarté pour l'instant (99 $/an de compte Apple) |
+
+```bash
+npm run app        # lance l'application de bureau
+npm run android    # assemble et ouvre le projet dans Android Studio
+```
+
+Voir **[docs/android.md](docs/android.md)** pour l'explication complète : ce que
+fait chaque outil, comment compiler sur votre machine, comment donner
+l'application à des amis, et ce que la question Vosk implique concrètement.
+
 ## Décisions d'architecture
 
 **Le cœur est du web pur.** Aucune API Electron ne remonte dans la logique
