@@ -150,3 +150,9 @@ L'application étant destinée à être partagée, voici ce qui est verrouillé 
   système, jamais dans l'application.
 - **Le texte affiché est échappé.** Un discours collé depuis n'importe quelle
   source ne peut pas exécuter de code dans l'application.
+- **Les dépendances sont auditées.** `npm audit` ne signale rien. Une alerte
+  antérieure sur `uuid` a été analysée plutôt que corrigée à l'aveugle : elle
+  concerne les fonctions `v3`, `v5` et `v6` lorsqu'un tampon leur est passé, or
+  le fichier réellement livré n'en contient aucune et n'appelle que `v4`, sans
+  tampon. Elle n'était pas exploitable ; la version a tout de même été relevée
+  et les outils de compilation séparés des dépendances d'exécution.

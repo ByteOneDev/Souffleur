@@ -146,3 +146,9 @@ Since the app is meant to be shared, here is what is locked down:
   refused — a link opens in the system browser, never inside the app.
 - **Displayed text is escaped.** A speech pasted from any source cannot execute
   code inside the app.
+- **Dependencies are audited.** `npm audit` reports nothing. An earlier alert on
+  `uuid` was analysed rather than blindly patched: it concerns the `v3`, `v5`
+  and `v6` functions when a buffer is passed to them, and the file actually
+  shipped contains none of those, calling only `v4` without a buffer. It was
+  not exploitable; the version was raised anyway and build tooling was
+  separated from runtime dependencies.
