@@ -12,6 +12,7 @@
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
+    "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
     "test": "node --test test/*.test.js",
     "vendor": "node scripts/vendor.js"

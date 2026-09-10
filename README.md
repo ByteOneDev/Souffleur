@@ -88,13 +88,14 @@ Speech)** dans Chrome. Pour **Vosk**, déposer le modèle français dans
 `models/` :
 
 ```bash
-mkdir -p models && cd models
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+npm run model
 ```
 
-Pour vérifier Vosk sur un téléphone Android : lancer `npm run dev` sur
-l'ordinateur, puis ouvrir `http://<adresse-locale>:5173/tools/android-check.html`
-depuis le téléphone, sur le même réseau.
+Pour vérifier Vosk sur un téléphone Android : `npm run dev:https` sur
+l'ordinateur, puis ouvrir depuis le téléphone l'adresse affichée. Le HTTPS est
+nécessaire : un navigateur ne donne accès au micro que dans un contexte
+sécurisé, ce que `http://192.168.x.x` n'est pas. Voir la
+[documentation d'installation](doc/francais/installation.md).
 
 ## Écrire un script
 

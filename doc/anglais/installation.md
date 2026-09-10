@@ -21,11 +21,12 @@ It runs **entirely on your device**: free, no key, no account, and no network
 once the model is downloaded. It is the only one that works in the desktop app.
 
 ```bash
-mkdir -p models && cd models
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+npm run model
 ```
 
-The French model is around fifty megabytes. It downloads once.
+The French model is around fifty megabytes and downloads once. The command
+places it correctly whatever directory you run it from, and re-downloads
+nothing if it is already there.
 
 Models for other languages are listed at
 [alphacephei.com/vosk/models](https://alphacephei.com/vosk/models). Note that
@@ -101,11 +102,10 @@ may kill the app while it loads. It is binary: it either fits or it does not.
 This can be checked **without Android Studio and without building anything**,
 in five minutes.
 
-**1. On the computer**, download the speech model once:
+**1. On the computer**, from the project directory, fetch the model:
 
 ```bash
-mkdir -p models && cd models
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+npm run model
 ```
 
 **2. Start the server over HTTPS** — and this matters:

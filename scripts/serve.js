@@ -16,7 +16,7 @@
  */
 import { createServer as createHttpServer } from 'node:http';
 import { createServer as createHttpsServer } from 'node:https';
-import { readFile, mkdir, access } from 'node:fs/promises';
+import { readFile, mkdir, access, readdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { networkInterfaces } from 'node:os';
@@ -89,6 +89,14 @@ async function repondre(request, response) {
 const serveur = HTTPS
   ? createHttpsServer(await certificat(), repondre)
   : createHttpServer(repondre);
+
+// Le modele manquant se manifeste sinon bien plus tard, sous la forme d'un
+// moteur vocal qui refuse de demarrer.
+const modeles = await readdir(join(ROOT, 'models')).catch(() => []);
+if (!modeles.some((f) => /\.(zip|tar\.gz)$/.test(f))) {
+  console.log('Aucun modèle vocal dans models/ — lancez « npm run model ».');
+  console.log('(le moteur « Simulation » fonctionne sans modèle)');
+}
 
 serveur.listen(PORT, () => {
   const schema = HTTPS ? 'https' : 'http';

@@ -22,12 +22,12 @@ et sans réseau une fois le modèle téléchargé. C'est le seul qui fonctionne 
 l'application de bureau.
 
 ```bash
-mkdir -p models && cd models
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+npm run model
 ```
 
-Le modèle français fait une cinquantaine de mégaoctets. Il ne se télécharge
-qu'une fois.
+Le modèle français fait une cinquantaine de mégaoctets et ne se télécharge
+qu'une fois. La commande le range au bon endroit quel que soit le dossier
+depuis lequel vous la lancez, et ne retélécharge rien s'il est déjà là.
 
 ### Web Speech — dépannage
 
@@ -101,11 +101,10 @@ juste, Android peut fermer l'application au moment du chargement. C'est binaire 
 
 Cela se vérifie **sans Android Studio et sans rien compiler**, en cinq minutes.
 
-**1. Sur l'ordinateur**, téléchargez le modèle vocal une fois :
+**1. Sur l'ordinateur**, depuis le dossier du projet, récupérez le modèle :
 
 ```bash
-mkdir -p models && cd models
-curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
+npm run model
 ```
 
 **2. Lancez le serveur en HTTPS** — et c'est important :
