@@ -54,6 +54,24 @@ someone give up who was doing you a favour by trying your tool.
 
 ---
 
+## The APK without installing anything
+
+Building an Android app requires Google's SDK and several gigabytes of tooling.
+You can skip all of it: **GitHub builds the APK on every push**.
+
+The repository's **Actions** tab → the latest "APK Android" run → the
+**Artifacts** section at the bottom → download the archive, which contains the
+APK.
+
+It is signed with Android's debug key: installable directly on a phone, but not
+publishable to the Play Store. The speech model is bundled by default, so the
+app works offline from the moment it is installed.
+
+On the phone, open the file: Android will offer to allow installation from this
+source. That is normal for an app that does not come from the Play Store.
+
+---
+
 # Android — Play Store internal testing
 
 This is the most comfortable path for the people close to you: they install from

@@ -56,6 +56,25 @@ suffit à faire abandonner quelqu'un qui rendait service en essayant votre outil
 
 ---
 
+## L'APK sans rien installer
+
+Compiler une application Android demande le SDK de Google et plusieurs
+gigaoctets d'outillage. Vous pouvez vous en dispenser : **GitHub construit
+l'APK à chaque envoi**.
+
+Onglet **Actions** du dépôt → dernière exécution de « APK Android » → section
+**Artifacts** en bas de page → télécharger l'archive, qui contient l'APK.
+
+Il est signé avec la clé de débogage d'Android : installable directement sur un
+téléphone, mais pas publiable sur le Play Store. Le modèle vocal y est embarqué
+par défaut, donc l'application fonctionne hors ligne dès l'installation.
+
+Sur le téléphone, ouvrez le fichier : Android proposera d'autoriser
+l'installation depuis cette source. C'est normal pour une application qui ne
+vient pas du Play Store.
+
+---
+
 # Android — le test interne du Play Store
 
 C'est le chemin le plus confortable pour vos proches : ils installent depuis le

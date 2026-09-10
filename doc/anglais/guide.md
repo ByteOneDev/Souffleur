@@ -99,6 +99,41 @@ The `↑` and `↓` arrows move the cursor one word. The engine resumes from the
 In practice it recovers on its own in most cases, including after an entirely
 skipped paragraph.
 
+## 7. Writing assistance
+
+Four functions, in the **Assistance** panel. They need an Anthropic key, which
+you supply yourself.
+
+| Function | What it does |
+|---|---|
+| **Rewrite for speaking** | Breaks up long sentences, removes constructions that only work on the page, places pauses and marks the words to stress |
+| **Fit the target duration** | Expands or trims to fit the time you set, preserving the opening and the closing |
+| **Backup cards** | One line per idea, with the exact opening words of each passage — what you glance at if you lose your place, standing, under pressure |
+| **Audience questions** | The six most likely questions, the most dangerous first, with what makes each hard. At least two substantive objections, and your blind spots named |
+
+**Your text is never replaced without your consent.** A rewrite appears at the
+bottom of the screen first; you decide whether to apply it.
+
+### The key
+
+The principle is bring-your-own-key: each person supplies their own, it is
+stored on their device, and no key ships with the app. That is what makes it
+possible to share the tool without sharing a secret and without hosting a
+server.
+
+Get one at [console.anthropic.com](https://console.anthropic.com), then paste it
+into the panel. It is never shown in full again; the **effacer la clé** button
+removes it.
+
+An honest caveat: the key travels from the app itself, which makes it readable
+by anyone with access to your device — like any password saved in a browser. On
+your own machine that is the normal trade-off; on a shared computer, clear it
+after use.
+
+The text you submit is sent to Anthropic and handled under their terms. The
+app's other functions — voice tracking, timing, the library — send nothing
+anywhere.
+
 ## Keyboard shortcuts
 
 | Key | Effect |

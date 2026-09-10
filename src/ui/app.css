@@ -249,3 +249,32 @@ kbd {
   border-radius: var(--radius-sm);
   padding: 1px 5px; background: var(--surface-sunk); color: var(--ink-soft);
 }
+
+/* --- Panneau d'assistance ------------------------------------------------- */
+
+#taches .action { margin-top: var(--space-1); }
+#taches .action:disabled { color: var(--ink-faint); border-color: var(--rule); cursor: not-allowed; }
+body.ia-active #taches .action { opacity: .5; }
+
+#ia-sortie {
+  border-top: var(--border-strong);
+  background: var(--surface);
+  max-height: 45vh;
+  display: flex;
+  flex-direction: column;
+}
+.ia-barre {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  border-bottom: var(--border);
+}
+.ia-barre #ia-titre {
+  flex: 1; font-size: var(--text-xs); text-transform: uppercase;
+  letter-spacing: var(--tracking-label); color: var(--ink-faint);
+}
+#ia-resultat {
+  margin: 0; padding: var(--space-4) var(--space-5);
+  overflow-y: auto; white-space: pre-wrap; word-break: break-word;
+  font: var(--text-base)/var(--leading-body) var(--font-ui);
+  color: var(--ink);
+}

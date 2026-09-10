@@ -101,6 +101,41 @@ Les flèches `↑` et `↓` déplacent le curseur d'un mot. Le moteur reprend le
 suivi à partir de là. En pratique, il se rattrape seul dans la plupart des cas,
 y compris après un paragraphe entièrement sauté.
 
+## 7. L'assistance rédactionnelle
+
+Quatre fonctions, dans le panneau **Assistance**. Elles demandent une clé
+Anthropic, que vous fournissez vous-même.
+
+| Fonction | Ce qu'elle fait |
+|---|---|
+| **Réécrire pour l'oral** | Casse les phrases longues, supprime les tournures qui ne passent qu'à l'écrit, place les pauses et souligne les mots à appuyer |
+| **Ajuster à la durée visée** | Allonge ou raccourcit pour tenir dans le temps que vous avez indiqué, en préservant l'ouverture et la chute |
+| **Fiches de secours** | Une ligne par idée, avec les premiers mots exacts de chaque passage — ce que vous regardez si vous perdez le fil, debout, sous tension |
+| **Questions du public** | Les six questions les plus probables, la plus redoutable en premier, avec ce qui les rend difficiles. Au moins deux objections de fond, et vos angles morts nommés |
+
+**Votre texte n'est jamais remplacé sans votre accord.** Une réécriture
+s'affiche d'abord en bas de l'écran ; c'est vous qui décidez de l'appliquer.
+
+### La clé
+
+Le principe est celui du « apportez votre propre clé » : chacun fournit la
+sienne, elle est rangée sur son appareil, et aucune clé n'est livrée avec
+l'application. C'est ce qui permet de partager l'outil sans partager de secret
+et sans héberger le moindre serveur.
+
+Obtenez-en une sur [console.anthropic.com](https://console.anthropic.com), puis
+collez-la dans le panneau. Elle n'est jamais réaffichée en entier ; le bouton
+**effacer la clé** la retire.
+
+Une réserve honnête : la clé circule depuis l'application, ce qui la rend
+lisible par qui a accès à votre appareil — comme n'importe quel mot de passe
+enregistré dans un navigateur. Sur votre machine personnelle, c'est le
+compromis normal ; sur un poste partagé, effacez-la après usage.
+
+Le texte que vous soumettez est envoyé à Anthropic et traité selon ses
+conditions. Les quatre autres fonctions de l'application — le suivi vocal, le
+chronométrage, la bibliothèque — n'envoient rien nulle part.
+
 ## Raccourcis clavier
 
 | Touche | Effet |

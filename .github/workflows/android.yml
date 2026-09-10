@@ -1,0 +1,78 @@
+# Fabrique l'APK Android.
+#
+# Compiler une application Android demande le SDK de Google et plusieurs
+# gigaoctets d'outillage. Plutôt que d'imposer cette installation, on laisse
+# GitHub s'en charger : à chaque envoi, l'APK est construit et déposé en pièce
+# jointe, prêt à être téléchargé depuis l'onglet « Actions ».
+#
+# L'APK produit est signé avec la clé de débogage d'Android : installable
+# directement sur un téléphone, mais pas publiable sur le Play Store — pour
+# cela, voir doc/francais/publier.md.
+
+name: APK Android
+
+on:
+  push:
+    branches: ['**']
+    paths-ignore: ['doc/**', '**.md']
+  workflow_dispatch:
+    inputs:
+      modele:
+        description: 'Embarquer le modèle vocal (~50 Mo) dans l’APK'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Dépendances et ressources
+        run: npm ci
+
+      - name: Modèle vocal
+        # Embarqué par défaut : l'application fonctionne alors hors ligne dès
+        # l'installation, sans aucune manipulation.
+        if: github.event_name != 'workflow_dispatch' || inputs.modele
+        run: npm run model
+
+      - name: Assemblage de l'application web
+        run: npm run build
+
+      - name: Synchronisation du projet Android
+        run: |
+          npx cap sync android
+          node scripts/android-manifest.js
+
+      - name: Construction de l'APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Nom de version
+        id: version
+        run: echo "nom=$(node -p "require('./package.json').version")-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: souffleur-${{ steps.version.outputs.nom }}-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 30
+          if-no-files-found: error

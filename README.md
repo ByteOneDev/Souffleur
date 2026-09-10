@@ -148,6 +148,7 @@ corrompu ou refusé n'empêche jamais d'ouvrir l'application.
 src/align/    normalisation FR, phonétique, similarité, moteur d'alignement
 src/script/   analyse des annotations et rendu du prompteur
 src/stt/      adaptateurs de moteurs vocaux + simulateur de lecture
+src/ai/       assistance rédactionnelle (tâches, clé, appel du modèle)
 src/store/    bibliothèque des discours (stockage injecté)
 src/ui/       charte, thèmes, polices, assemblage de l'interface
 test/         tests, banc de mesure et test de rupture
@@ -229,6 +230,9 @@ Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est 
 risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
 la [documentation d'installation](doc/francais/installation.md)).
 
-À venir : découpage par sections avec durée cible, fonctions IA (réécriture pour
-l'oral, ajustement à une durée, fiches de secours), analyse de répétition,
-import de documents, et télécommande depuis le téléphone.
+Fait aussi : l'assistance rédactionnelle — réécriture pour l'oral, ajustement à
+une durée, fiches de secours, questions du public — avec la clé de chaque
+utilisateur, rangée sur son appareil.
+
+À venir : découpage par sections avec durée cible, analyse de répétition, import
+de documents, et télécommande depuis le téléphone.

@@ -15,6 +15,7 @@ import { availableEngines, createEngine } from '../stt/index.js';
 import { Library, countWords, estimateSeconds } from '../store/library.js';
 import { readTheme, applyTheme, saveTheme, nextTheme } from './theme.js';
 import { garderEcranAllume, libererEcran } from './wakelock.js';
+import { installerAssistant } from './assistant.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -357,6 +358,19 @@ function bind() {
     // Rattrapage manuel : l'orateur reprend la main si le suivi decroche.
     if (event.key === 'ArrowDown') { state.aligner.cursor += 1; paint(state.aligner.position); }
     if (event.key === 'ArrowUp') { state.aligner.cursor -= 1; paint(state.aligner.position); }
+  });
+
+  installerAssistant({
+    lireTexte: () => $('#source').value,
+    // Une réécriture passe par le même chemin qu'une frappe : elle est rendue,
+    // enregistrée, et reste annulable en rouvrant une version précédente.
+    ecrireTexte: (texte) => {
+      if (state.locked) setLocked(false);
+      $('#source').value = texte;
+      prepare(texte);
+      scheduleSave();
+    },
+    dureeVisee: () => Number($('#target').value) || 0,
   });
 
   setupEngines();

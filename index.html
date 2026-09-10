@@ -82,6 +82,24 @@
   </section>
 
   <section class="block">
+    <h2>Assistance</h2>
+    <p class="hint" id="cle-etat">aucune clé enregistrée</p>
+    <input type="password" id="cle-champ" placeholder="sk-ant-…" autocomplete="off"
+           aria-label="Clé Anthropic" style="margin-top:var(--space-2)">
+    <button class="icon" id="cle-enregistrer" style="margin-top:var(--space-2)">enregistrer la clé</button>
+    <button class="icon" id="cle-effacer" hidden style="margin-top:var(--space-2)">effacer la clé</button>
+    <div id="taches" style="margin-top:var(--space-3)">
+      <button class="action tache" data-tache="oral" disabled>Réécrire pour l’oral</button>
+      <button class="action tache" data-tache="duree" disabled>Ajuster à la durée visée</button>
+      <button class="action tache" data-tache="fiches" disabled>Fiches de secours</button>
+      <button class="action tache" data-tache="questions" disabled>Questions du public</button>
+    </div>
+    <p class="hint" id="ia-message"></p>
+    <p class="hint">Votre clé reste sur cet appareil. Le texte envoyé est traité par
+      Anthropic selon ses conditions.</p>
+  </section>
+
+  <section class="block">
     <button class="action primary" id="toggle">Démarrer</button>
     <button class="action" id="reset">Revenir au début</button>
     <p class="hint">
@@ -105,6 +123,15 @@
   <div id="progress-track"><div id="progress-bar"></div></div>
   <p id="message"></p>
   <div id="prompter-view"><div id="prompter"></div></div>
+
+  <div id="ia-sortie" hidden>
+    <div class="ia-barre">
+      <span id="ia-titre">Proposition</span>
+      <button class="icon" id="ia-appliquer" hidden>remplacer le texte</button>
+      <button class="icon" id="ia-fermer">fermer</button>
+    </div>
+    <pre id="ia-resultat"></pre>
+  </div>
 </main>
 
 <script type="module" src="src/ui/app.js"></script>
