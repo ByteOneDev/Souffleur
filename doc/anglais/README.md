@@ -10,8 +10,12 @@ whether you are ahead of or behind schedule.
    stage. Start here.
 2. **[Installation](installation.md)** — desktop, Android, and how to share the
    app with friends.
-3. **[How it works](how-it-works.md)** — voice tracking explained, the
+3. **[Distributing the app](publishing.md)** — building the `.dmg` for Mac,
+   publishing to the Play Store's internal testing track for your friends.
+4. **[How it works](how-it-works.md)** — voice tracking explained, the
    measurements, the speech engines and their limits.
+5. **[Privacy policy](privacy.md)** — what the app does, and above all does not
+   do, with your data.
 
 ## In thirty seconds
 

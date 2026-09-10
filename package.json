@@ -12,6 +12,8 @@
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
+    "dist": "node scripts/build-check.js && electron-builder",
+    "dist:mac": "node scripts/build-check.js && electron-builder --mac",
     "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
     "test": "node --test test/*.test.js",
@@ -25,10 +27,74 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
-    "electron": "^44.3.0"
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
   },
   "main": "electron/main.js",
   "overrides": {
     "uuid": "^11.1.1"
+  },
+  "build": {
+    "appId": "fr.souffleur.app",
+    "productName": "Souffleur",
+    "copyright": "Souffleur",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "src/**/*",
+      "vendor/**/*",
+      "electron/**/*",
+      "models/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "darkModeSupport": true,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Souffleur écoute votre voix pour suivre votre position dans le texte. L'audio ne quitte jamais cet appareil."
+      }
+    },
+    "dmg": {
+      "title": "Souffleur",
+      "contents": [
+        {
+          "x": 140,
+          "y": 200,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "icon": "build/icon.png",
+      "category": "Office"
+    }
   }
 }

@@ -169,7 +169,11 @@ standard, exécutable directement par le navigateur et par Node.
 ```bash
 npm run app        # lance l'application de bureau
 npm run android    # assemble et ouvre le projet dans Android Studio
+npm run dist:mac   # fabrique le .dmg (à lancer sur un Mac)
 ```
+
+Pour distribuer l'application — `.dmg` signé ou non, test interne du Play Store
+— voir **[doc/francais/publier.md](doc/francais/publier.md)**.
 
 Voir **[doc/francais/installation.md](doc/francais/installation.md)** pour
 l'explication complète : ce que fait chaque outil, comment compiler sur votre

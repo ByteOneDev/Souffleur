@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// La signature est lue dans keystore.properties, volontairement hors du depot :
+// une cle de publication ne se versionne jamais. Sans ce fichier, seule la
+// construction de debogage reste possible, ce qui est le comportement voulu.
+def fichierCle = rootProject.file("../keystore.properties")
+def proprietesCle = new Properties()
+if (fichierCle.exists()) {
+    proprietesCle.load(new FileInputStream(fichierCle))
+}
+
 android {
     namespace = "fr.souffleur.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,8 +25,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (proprietesCle.containsKey('storeFile')) {
+                storeFile rootProject.file("../" + proprietesCle['storeFile'])
+                storePassword proprietesCle['storePassword']
+                keyAlias proprietesCle['keyAlias']
+                keyPassword proprietesCle['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (proprietesCle.containsKey('storeFile')) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
