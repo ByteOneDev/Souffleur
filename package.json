@@ -11,6 +11,7 @@
     "check:android": "node scripts/serve.js"
   },
   "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "vosk-browser": "0.0.8"
   }
 }

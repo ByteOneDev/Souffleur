@@ -63,6 +63,14 @@ test('un # en milieu de ligne reste du texte ordinaire', () => {
   assert.equal(script.sections.length, 0);
 });
 
+test('une pause s affiche en toutes lettres, sans pictogramme', () => {
+  const script = parseScript('Un temps. (2s) Puis la suite.');
+  const html = renderHtml(buildFragments(script, tokenize(script.spoken)));
+  assert.match(html, /insert-pause">pause 2s</);
+  // Un caractere hors ASCII imprimable retomberait sur un carre en chasse fixe.
+  assert.ok(!/[\u2000-\u2BFF\uFE0F]/.test(html), 'aucun pictogramme dans le rendu');
+});
+
 test('le html echappe le contenu injecte et porte les index', () => {
   const script = parseScript('Un <script>alert(1)</script> et **gras**');
   const html = renderHtml(buildFragments(script, tokenize(script.spoken)));

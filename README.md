@@ -63,8 +63,9 @@ reprises, avec une pénalité réduite sur les mots hors texte).
 ## Essayer
 
 ```bash
+npm install
 npm run dev     # http://localhost:5173
-npm test        # 26 tests
+npm test        # 39 tests
 npm run bench   # tableau de qualité de l'alignement
 node test/stress.js   # recherche du point de rupture
 ```
@@ -80,6 +81,10 @@ mkdir -p models && cd models
 curl -LO https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip
 ```
 
+Pour vérifier Vosk sur un téléphone Android : lancer `npm run dev` sur
+l'ordinateur, puis ouvrir `http://<adresse-locale>:5173/tools/android-check.html`
+depuis le téléphone, sur le même réseau.
+
 ## Écrire un script
 
 ```
@@ -94,14 +99,47 @@ _italique_                nuance, aparté
 Le texte se verrouille d'un clic (ou par `L`) : une fois en situation, une
 frappe accidentelle ne peut plus modifier le discours.
 
+## Charte graphique — « encre et ruban »
+
+L'objet de référence est la machine à écrire : bichromie noir et rouge héritée
+du ruban, papier, filets plutôt qu'ombres, étiquettes en capitales espacées.
+**JetBrains Mono** porte cette identité dans toute l'interface et dans la liste
+des textes ; elle est installée depuis npm et servie par l'application, jamais
+par un service de polices distant — l'affichage doit tenir hors ligne comme
+l'écoute.
+
+Les deux modes sont définis intégralement dans `src/ui/tokens.css`, jamais l'un
+dérivé de l'autre à la hâte : mode clair « papier », mode sombre « encre ». Le
+sombre reste le cas principal — on lit un discours dans une salle éteinte — et
+le bouton de thème cycle entre automatique, clair et sombre. Aucune couleur
+n'est écrite en dur ailleurs que dans le fichier de jetons.
+
+**La surface de lecture fait exception à la chasse fixe.** À 34 px et à
+distance, une police proportionnelle se lit mesurablement plus vite qu'un
+monospace, et lire vite est le métier d'un prompteur. Le texte s'affiche donc
+par défaut dans une police de lecture, avec la machine à écrire disponible en
+un clic pour qui préfère l'identité complète.
+
+## Bibliothèque
+
+Un orateur ne prépare pas un texte mais plusieurs, et il y revient : la
+bibliothèque est le point d'entrée, pas un annexe. Les textes sont enregistrés
+au fil de la frappe, titrés automatiquement d'après leur première section (ou
+leurs premiers mots, sans finir sur un mot suspendu), et affichés avec leur
+nombre de mots et leur durée estimée. Le stockage est injecté plutôt que
+supposé : `localStorage` dans le navigateur, mémoire ailleurs, et un stockage
+corrompu ou refusé n'empêche jamais d'ouvrir l'application.
+
 ## Organisation
 
 ```
 src/align/    normalisation FR, phonétique, similarité, moteur d'alignement
 src/script/   analyse des annotations et rendu du prompteur
 src/stt/      adaptateurs de moteurs vocaux + simulateur de lecture
-src/ui/       assemblage de l'interface (couche volontairement jetable)
+src/store/    bibliothèque des discours (stockage injecté)
+src/ui/       charte, thèmes, polices, assemblage de l'interface
 test/         tests, banc de mesure et test de rupture
+tools/        banc de vérification de Vosk sur un appareil Android
 ```
 
 Aucune dépendance d'exécution, aucune étape de compilation : du JavaScript
@@ -119,6 +157,21 @@ Node.js. Le mobile passera par Capacitor sur le même cœur.
 **Cibles retenues : macOS et Android.** iOS est repoussé — il impose un compte
 Apple Developer à 99 $/an. La couche d'abstraction du moteur vocal existe déjà,
 donc l'ajouter plus tard ne demandera pas de réécriture.
+
+**Vosk sur Android n'est pas encore vérifié.** C'est le seul risque ouvert du
+projet. Il n'a pas pu être levé en environnement d'intégration : le modèle et
+le CDN y sont bloqués par la politique réseau, et il n'existe ni SDK Android ni
+virtualisation pour émuler un appareil. Seul un téléphone réel peut répondre,
+d'où `tools/android-check.html` : à ouvrir sur le téléphone, il mesure le
+moteur WebAssembly, le micro, le chargement du modèle et une lecture réelle,
+puis rend un verdict. Il détecte aussi l'onglet tué par manque de mémoire, en
+posant un marqueur avant l'étape risquée et en le relisant au démarrage suivant.
+
+Ce qui **est** vérifié, par la mesure : le binaire WebAssembly fait 3 Mo,
+s'ouvre sur 16 Mo de mémoire et peut croître jusqu'à 2 Go ; il compile en 9 ms
+et s'instancie en 1 ms ; il n'utilise pas `SharedArrayBuffer` et n'appelle
+aucune ressource externe à l'exécution. Ce qui reste inconnu est l'empreinte
+mémoire du modèle français une fois chargé sur un appareil réel.
 
 **Le moteur vocal est interchangeable.** Vosk local par défaut : gratuit, hors
 ligne, sans clé API, et il fonctionne dans Electron là où la Web Speech API

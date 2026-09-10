@@ -1,0 +1,150 @@
+/**
+ * Charte graphique — « encre et ruban ».
+ *
+ * L'objet de reference est la machine a ecrire : une bichromie noir et rouge
+ * heritee du ruban, du papier, des filets plutot que des ombres, et des
+ * etiquettes en capitales espacees comme celles gravees sur le chariot.
+ * JetBrains Mono porte cette identite tout en restant lisible longtemps.
+ *
+ * Le mode sombre est le cas principal — on lit un discours dans une salle
+ * eteinte — mais les deux modes sont definis entierement, jamais l'un derive
+ * a la va-vite de l'autre.
+ *
+ * Regle : aucune couleur n'est ecrite en dur ailleurs que dans ce fichier.
+ */
+
+/* --- Mode clair : papier ------------------------------------------------- */
+:root {
+  --paper:        #f3efe6;
+  --surface:      #faf7f0;
+  --surface-sunk: #ebe5d8;
+  --rule:         #d9d1c0;
+  --rule-strong:  #b9ae97;
+
+  --ink:          #221f1a;
+  --ink-soft:     #55503f;
+  --ink-faint:    #8b8471;
+
+  --ribbon:       #b4362c;   /* le rouge du ruban : etat vif, action, alerte */
+  --ribbon-soft:  #f0dcd8;
+  --lamp:         #9a6a12;   /* l'ambre de la lampe : le mot en cours */
+  --lamp-soft:    #f3e2bd;
+  --signal:       #2f6f4f;   /* suivi verrouille */
+  --cool:         #2c5d94;   /* reperes secondaires, surbrillance */
+  --cool-soft:    #dce7f2;
+
+  /* Surface de lecture : ce qui reste a dire doit primer sur ce qui est dit. */
+  --read-ahead:   var(--ink);
+  --read-done:    #b3ab97;
+
+  --on-accent:    #fbf8f2;
+  color-scheme: light;
+}
+
+/* --- Mode sombre : encre ------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper:        #121316;
+    --surface:      #181a1e;
+    --surface-sunk: #0d0e11;
+    --rule:         #282b31;
+    --rule-strong:  #3b3f47;
+
+    --ink:          #e9e4d9;
+    --ink-soft:     #a09a8c;
+    --ink-faint:    #6d685e;
+
+    --ribbon:       #e0554a;
+    --ribbon-soft:  #3a1f1d;
+    --lamp:         #e2ac4e;
+    --lamp-soft:    #38301c;
+    --signal:       #5fbf8e;
+    --cool:         #6ea8e0;
+    --cool-soft:    #1d2833;
+
+    --read-ahead:   var(--ink);
+    --read-done:    #4e4a43;
+
+    --on-accent:    #14100f;
+    color-scheme: dark;
+  }
+}
+
+/* Choix explicite de l'utilisateur : il l'emporte sur la preference systeme. */
+:root[data-theme='dark'] {
+  --paper:        #121316;
+  --surface:      #181a1e;
+  --surface-sunk: #0d0e11;
+  --rule:         #282b31;
+  --rule-strong:  #3b3f47;
+
+  --ink:          #e9e4d9;
+  --ink-soft:     #a09a8c;
+  --ink-faint:    #6d685e;
+
+  --ribbon:       #e0554a;
+  --ribbon-soft:  #3a1f1d;
+  --lamp:         #e2ac4e;
+  --lamp-soft:    #38301c;
+  --signal:       #5fbf8e;
+  --cool:         #6ea8e0;
+  --cool-soft:    #1d2833;
+
+  --read-ahead:   var(--ink);
+  --read-done:    #4e4a43;
+
+  --on-accent:    #14100f;
+  color-scheme: dark;
+}
+
+:root {
+  /* Typographie : une seule famille pour l'interface, l'identite tient a elle. */
+  --font-ui: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', Menlo, monospace;
+  /* La surface de lecture peut s'en ecarter : a distance, une police
+     proportionnelle se lit plus vite qu'une chasse fixe. */
+  --font-read: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+
+  --text-xs:   11px;
+  --text-sm:   12px;
+  --text-base: 13px;
+  --text-md:   15px;
+  --text-lg:   19px;
+  --text-xl:   26px;
+
+  --tracking-label: .14em;   /* capitales espacees, comme gravees */
+  --leading-tight: 1.25;
+  --leading-body:  1.55;
+  --leading-read:  1.62;
+
+  /* Espacements : pas de 4 px, aucune valeur intermediaire improvisee. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Angles francs : une machine mecanique n'a pas de coins arrondis mous. */
+  --radius-sm: 2px;
+  --radius:    3px;
+  --radius-lg: 5px;
+
+  --border: 1px solid var(--rule);
+  --border-strong: 1px solid var(--rule-strong);
+
+  --motion-fast: 90ms;
+  --motion:      160ms;
+  --ease: cubic-bezier(.2, .6, .3, 1);
+}
+
+/* La frappe au clavier est le mode d'emploi de l'outil : le focus se voit. */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ribbon);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --motion-fast: 0ms; --motion: 0ms; }
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}

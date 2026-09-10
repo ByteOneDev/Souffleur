@@ -64,7 +64,11 @@ export function renderHtml(fragments) {
   let html = '';
   for (const fragment of fragments) {
     if (fragment.type === 'insert') {
-      const label = fragment.kind === 'pause' ? `&#9208; ${escapeHtml(fragment.text)}` : escapeHtml(fragment.text);
+      // Pas de pictogramme : les polices a chasse fixe n'ont pas le symbole
+      // de pause et affichent un carre de substitution a la place.
+      const label = fragment.kind === 'pause'
+        ? `pause ${escapeHtml(fragment.text)}`
+        : escapeHtml(fragment.text);
       html += `<span class="insert insert-${fragment.kind}">${label}</span>`;
       continue;
     }
