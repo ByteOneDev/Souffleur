@@ -18,8 +18,14 @@ Le choix se change à tout moment, y compris en pleine préparation.
 
 ## 2. Écrire et annoter le texte
 
-Écrivez ou collez votre texte dans le panneau de gauche. Six annotations sont
-disponibles :
+Cliquez dans le texte, au milieu de l'écran — ou appuyez sur **éditer**, ou sur
+la touche `E`. Le texte devient modifiable **là où il est**, dans la même
+colonne, la même police et la même taille : ce que vous écrivez est déjà mis en
+page comme ce que vous lirez.
+
+Un second clic sur **lire**, ou `Échap`, revient à la lecture.
+
+Six annotations sont disponibles :
 
 | Vous écrivez | Ce que ça fait |
 |---|---|
@@ -47,7 +53,8 @@ oubliée : la technique n'est ==jamais neutre==.
 
 ## 3. Régler la durée visée
 
-Indiquez la durée que vous visez, en minutes. Dès que vous commencez à lire,
+Ouvrez les réglages — l'engrenage, en haut à droite — et poussez le curseur
+**Durée visée**. Dès que vous commencez à lire,
 l'indicateur **Avance / retard** compare votre progression réelle au temps
 écoulé et affiche l'écart :
 
@@ -66,20 +73,22 @@ fin que vous avez pris dix minutes de trop.
   fixe de l'interface. Essayez les deux, gardez celle qui vous fatigue le moins.
 - **Mode miroir** : inverse le texte horizontalement, pour un prompteur
   physique à vitre semi-réfléchissante.
-- **Thème** : le bouton en haut à gauche cycle entre automatique, clair et
-  sombre. En salle, le sombre fatigue moins les yeux et éclaire moins votre
-  visage.
+- **Thème** : automatique, clair ou sombre. En salle, le sombre fatigue moins
+  les yeux et éclaire moins votre visage.
 
-## 5. Verrouiller le texte
+Tous ces réglages vivent dans le panneau de l'engrenage, qui glisse par-dessus
+le texte sans le masquer : vous voyez l'effet du curseur pendant que vous le
+poussez.
 
-Le bouton **🔓 modifiable** bascule en **🔒 verrouillé** (ou la touche `L`).
-Une fois verrouillé, ni le texte ni le titre ne peuvent être modifiés.
+## 5. Le texte est protégé de lui-même
 
-À faire systématiquement avant de monter sur scène : il suffit d'une touche
-frappée par mégarde pour abîmer un texte qu'on ne relira plus.
+Il n'y a rien à verrouiller avant de monter sur scène. En lecture, le texte
+n'est plus un champ de saisie mais une page composée : aucune touche frappée par
+mégarde ne peut l'abîmer.
 
-C'est une sécurité d'usage, pas une protection informatique : le verrou se
-retire d'un clic.
+L'édition, elle, se referme d'elle-même au démarrage de la lecture, et le bouton
+**éditer** reste inactif tant que le suivi tourne. Pendant que vous parlez, le
+texte ne bouge pas.
 
 ## 6. Lire
 
@@ -106,11 +115,15 @@ y compris après un paragraphe entièrement sauté.
 | Touche | Effet |
 |---|---|
 | `Espace` | démarrer ou arrêter |
-| `L` | verrouiller ou déverrouiller le texte |
+| `E` | passer de la lecture à l'édition |
+| `Échap` | refermer les réglages, le menu, ou l'édition |
 | `F` | plein écran |
 | `↑` `↓` | rattraper la position d'un mot |
 
 ## Vos textes
+
+Le titre affiché en haut de l'écran est aussi le menu de vos textes : déroulez-le
+pour en choisir un autre, en créer un, ou supprimer celui qui est ouvert.
 
 Chaque texte est enregistré automatiquement pendant que vous tapez, avec son
 titre, son nombre de mots et sa durée estimée. La liste est classée du plus

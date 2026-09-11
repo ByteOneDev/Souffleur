@@ -18,7 +18,14 @@ You can switch at any time, including mid-preparation.
 
 ## 2. Write and annotate the text
 
-Type or paste your text in the left panel. Six annotations are available:
+Click into the text, in the middle of the screen — or press **éditer**, or the
+`E` key. The text becomes editable **where it stands**, in the same column, the
+same typeface and the same size: what you write is already laid out like what
+you will read.
+
+Clicking **lire** again, or pressing `Escape`, returns to reading.
+
+Six annotations are available:
 
 | You write | What it does |
 |---|---|
@@ -46,8 +53,8 @@ forgotten: technology is ==never neutral==.
 
 ## 3. Set the target duration
 
-Enter the duration you are aiming for, in minutes. As soon as you start
-reading, the **Ahead / behind** indicator compares your actual progress with
+Open the settings — the gear, top right — and push the **Durée visée** slider.
+As soon as you start reading, the **Ahead / behind** indicator compares your actual progress with
 the elapsed time:
 
 - **green**: you are on schedule;
@@ -65,18 +72,19 @@ the end that you ran ten minutes over.
   Try both, keep whichever tires you less.
 - **Mirror mode**: flips the text horizontally, for a physical teleprompter
   with a half-silvered glass.
-- **Theme**: the button at the top left cycles through automatic, light and
-  dark. In a darkened room, dark tires the eyes less and lights your face less.
+- **Theme**: automatic, light or dark. In a darkened room, dark tires the eyes
+  less and lights your face less.
 
-## 5. Lock the text
+All of these live in the gear panel, which slides over the text without hiding
+it: you see what a slider does while you push it.
 
-The **🔓 modifiable** button switches to **🔒 locked** (or press `L`). Once
-locked, neither the text nor the title can be changed.
+## 5. The text protects itself
 
-Do this every time before going on stage: one stray keystroke is enough to
-damage a text you will not proofread again.
+There is nothing to lock before going on stage. In reading mode the text is no
+longer an input field but a composed page: no stray keystroke can damage it.
 
-It is a safety catch, not a security feature: one click removes it.
+Editing closes itself when reading starts, and the **éditer** button stays
+disabled while tracking runs. While you speak, the text does not move.
 
 ## 6. Read
 
@@ -104,11 +112,15 @@ skipped paragraph.
 | Key | Effect |
 |---|---|
 | `Space` | start or stop |
-| `L` | lock or unlock the text |
+| `E` | switch between reading and editing |
+| `Escape` | close the settings, the menu, or editing |
 | `F` | full screen |
 | `↑` `↓` | nudge the position by one word |
 
 ## Your texts
+
+The title shown at the top of the screen is also the menu of your texts: open
+it to pick another, create one, or delete the one in front of you.
 
 Each text is saved automatically as you type, with its title, word count and
 estimated duration. The list is sorted most recently edited first, and the

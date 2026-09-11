@@ -13,7 +13,7 @@ import { tokenize } from '../align/tokenize.js';
 import { Aligner } from '../align/aligner.js';
 import { availableEngines, createEngine } from '../stt/index.js';
 import { Library, countWords, estimateSeconds } from '../store/library.js';
-import { readTheme, applyTheme, saveTheme, nextTheme } from './theme.js';
+import { readTheme, applyTheme, saveTheme } from './theme.js';
 import { garderEcranAllume, libererEcran } from './wakelock.js';
 
 const $ = (selector) => document.querySelector(selector);
@@ -51,7 +51,7 @@ const state = {
   aligner: null,
   engine: null,
   running: false,
-  locked: false,
+  editing: false,
   startedAt: null,
   targetSeconds: 0,
   wordElements: [],
@@ -97,8 +97,21 @@ function open(entry) {
     input.checked = input.value === entry.profile;
   }
   updateProfileHint();
+  showTarget();
+  showTitle();
   prepare(entry.source);
   renderLibrary();
+  setEditing(false);
+}
+
+/** Le titre du texte courant sert d'etiquette au menu de la bibliotheque. */
+function showTitle() {
+  $('#text-menu-label').textContent = $('#title').value.trim() || 'sans titre';
+}
+
+function showTarget() {
+  const minutes = Number($('#target').value);
+  $('#target-value').textContent = minutes ? `${minutes} min` : 'libre';
 }
 
 /** Enregistrement differe : on ecrit apres la frappe, pas pendant. */
@@ -195,6 +208,8 @@ function updateStats() {
 
 async function start() {
   if (state.running) return;
+  setEditing(false);
+  toggleLibrary(false);
   const engineId = $('#engine').value;
   const options = engineId === 'simulated'
     ? { text: state.script.spoken, wpm: 150, scenario: { errorRate: 0.12, dropRate: 0.08, fillerRate: 0.05 } }
@@ -230,6 +245,7 @@ async function start() {
   // discours parce que personne n'a touche le clavier depuis deux minutes.
   garderEcranAllume();
   $('#toggle').textContent = 'Arrêter';
+  $('#mode').disabled = true;
   document.body.classList.add('running');
   updateStats();
 }
@@ -241,22 +257,75 @@ async function stop() {
   await state.engine?.stop();
   state.engine = null;
   $('#toggle').textContent = 'Démarrer';
+  $('#mode').disabled = false;
   document.body.classList.remove('running');
   updateStats();
 }
 
+// --- Lecture et edition -----------------------------------------------------
+
 /**
- * Verrouiller le texte : une fois en situation, une frappe accidentelle ne doit
- * pas pouvoir modifier le discours. C'est une securite d'usage, pas de securite
- * informatique.
+ * Les deux faces d'un meme ecran.
+ *
+ * En lecture, le texte est du texte mis en page : aucune frappe ne peut
+ * l'atteindre. C'est la protection que le verrou d'autrefois demandait a
+ * l'utilisateur de mettre lui-meme, et qu'il oubliait.
+ *
+ * En edition, le champ occupe la meme colonne, dans la meme police et a la
+ * meme taille : ce qu'on ecrit est deja mis en page comme ce qu'on lira.
  */
-function setLocked(locked) {
-  state.locked = locked;
-  $('#source').readOnly = locked;
-  $('#title').readOnly = locked;
-  document.body.classList.toggle('locked', locked);
-  $('#lock').textContent = locked ? '🔒 verrouillé' : '🔓 modifiable';
-  $('#lock').setAttribute('aria-pressed', String(locked));
+function setEditing(editing) {
+  // Pendant qu'on parle, le texte ne bouge pas.
+  if (editing && state.running) return;
+  state.editing = editing;
+
+  const view = $('#prompter-view');
+  // Retrouver sa place apres la bascule : les deux faces n'ont pas la meme
+  // hauteur, mais on revient au meme endroit du texte.
+  const debattement = view.scrollHeight - view.clientHeight;
+  const position = debattement > 0 ? view.scrollTop / debattement : 0;
+
+  document.body.classList.toggle('editing', editing);
+  $('#prompter').hidden = editing;
+  $('#source').hidden = !editing;
+  $('#syntax').hidden = !editing;
+  $('#mode').textContent = editing ? 'lire' : 'éditer';
+  $('#mode').setAttribute('aria-pressed', String(editing));
+
+  if (editing) {
+    ajusterChamp();
+    $('#source').focus();
+  } else {
+    prepare($('#source').value);
+  }
+
+  const cible = Math.max(0, view.scrollHeight - view.clientHeight) * position;
+  view.scrollTo({ top: Math.round(cible), behavior: 'instant' });
+}
+
+/** Le champ grandit avec le texte : c'est la page qui defile, pas un cadre. */
+function ajusterChamp() {
+  const champ = $('#source');
+  champ.style.height = 'auto';
+  champ.style.height = `${champ.scrollHeight}px`;
+}
+
+// --- Depliants --------------------------------------------------------------
+
+function toggleLibrary(ouvrir) {
+  const menu = $('#library');
+  const voulu = ouvrir ?? menu.hidden;
+  menu.hidden = !voulu;
+  $('#text-menu').setAttribute('aria-expanded', String(voulu));
+  if (voulu) $('#filter').focus();
+}
+
+function toggleSettings(ouvrir) {
+  const panneau = $('#settings');
+  const voulu = ouvrir ?? panneau.hidden;
+  panneau.hidden = !voulu;
+  $('#scrim').hidden = !voulu;
+  $('#settings-open').setAttribute('aria-expanded', String(voulu));
 }
 
 function updateProfileHint() {
@@ -277,40 +346,59 @@ function setupEngines() {
 }
 
 function bind() {
-  let theme = applyTheme(readTheme());
-  $('#theme').textContent = theme;
-  $('#theme').addEventListener('click', () => {
-    theme = applyTheme(nextTheme(theme));
-    saveTheme(theme);
-    $('#theme').textContent = theme;
-  });
+  const theme = applyTheme(readTheme());
+  for (const input of document.querySelectorAll('input[name="theme"]')) {
+    input.checked = input.value === theme;
+    input.addEventListener('change', (event) => {
+      applyTheme(event.target.value);
+      saveTheme(event.target.value);
+    });
+  }
 
   const entries = library.recent();
   open(entries.length ? entries[0] : library.create({ source: EXAMPLE, profile: 'discours' }));
 
+  // --- Bibliotheque ---------------------------------------------------------
+
+  $('#text-menu').addEventListener('click', () => toggleLibrary());
   $('#texts').addEventListener('click', (event) => {
     const button = event.target.closest('.entry');
-    if (button) open(library.get(button.dataset.id));
+    if (!button) return;
+    open(library.get(button.dataset.id));
+    toggleLibrary(false);
   });
   $('#filter').addEventListener('input', renderLibrary);
   $('#new-text').addEventListener('click', () => {
     open(library.create({ source: '# Nouveau discours\n\n', profile: state.profile }));
-    $('#source').focus();
+    toggleLibrary(false);
+    setEditing(true);
   });
   $('#delete-text').addEventListener('click', () => {
     if (!state.entryId || !confirm('Supprimer définitivement ce texte ?')) return;
     library.remove(state.entryId);
-    const rest = library.recent();
-    open(rest.length ? rest[0] : library.create({ source: EXAMPLE }));
+    const reste = library.recent();
+    open(reste.length ? reste[0] : library.create({ source: EXAMPLE }));
+    toggleLibrary(false);
   });
 
-  $('#source').addEventListener('input', (event) => {
-    if (state.locked) return;
-    prepare(event.target.value);
+  // Un depliant se referme des qu'on regarde ailleurs.
+  document.addEventListener('click', (event) => {
+    if (!$('#library').hidden && !event.target.closest('.picker')) toggleLibrary(false);
+  });
+
+  // --- Reglages -------------------------------------------------------------
+
+  $('#settings-open').addEventListener('click', () => toggleSettings());
+  $('#settings-close').addEventListener('click', () => toggleSettings(false));
+  $('#scrim').addEventListener('click', () => toggleSettings(false));
+
+  $('#title').addEventListener('input', () => { showTitle(); scheduleSave(); });
+  $('#target').addEventListener('input', (event) => {
+    state.targetSeconds = Number(event.target.value) * 60;
+    showTarget();
+    updateStats();
     scheduleSave();
   });
-  $('#title').addEventListener('input', scheduleSave);
-  $('#lock').addEventListener('click', () => setLocked(!state.locked));
 
   for (const input of document.querySelectorAll('input[name="profile"]')) {
     input.addEventListener('change', (event) => {
@@ -320,18 +408,35 @@ function bind() {
       scheduleSave();
     });
   }
-  for (const input of document.querySelectorAll('input[name="readfont"]')) {
-    input.addEventListener('change', (event) => {
-      $('#prompter').classList.toggle('mono', event.target.value === 'mono');
-    });
-  }
 
   $('#engine').addEventListener('change', (event) => {
     $('#model-row').hidden = event.target.value !== 'vosk';
   });
-  $('#target').addEventListener('input', (event) => {
-    state.targetSeconds = Number(event.target.value) * 60;
-    updateStats();
+
+  $('#font-size').addEventListener('input', (event) => {
+    $('#prompter-view').style.fontSize = `${event.target.value}px`;
+    $('#font-size-value').textContent = `${event.target.value} px`;
+    if (state.editing) ajusterChamp();
+  });
+  for (const input of document.querySelectorAll('input[name="readfont"]')) {
+    input.addEventListener('change', (event) => {
+      $('#prompter-view').classList.toggle('mono', event.target.value === 'mono');
+      if (state.editing) ajusterChamp();
+    });
+  }
+  $('#mirror').addEventListener('change', (event) => {
+    $('#prompter-view').classList.toggle('mirror', event.target.checked);
+  });
+
+  // --- Lecture et edition ---------------------------------------------------
+
+  $('#mode').addEventListener('click', () => setEditing(!state.editing));
+  // Le texte lui-meme est la porte d'entree : on clique dedans pour le corriger.
+  $('#prompter').addEventListener('click', () => { if (!state.running) setEditing(true); });
+  $('#source').addEventListener('input', () => {
+    // Le texte lu est reconstruit en sortant d'edition, pas a chaque frappe :
+    // il n'est meme pas affiche pendant ce temps.
+    ajusterChamp();
     scheduleSave();
   });
 
@@ -342,17 +447,20 @@ function bind() {
     paint(-1);
     updateStats();
   });
-  $('#font-size').addEventListener('input', (event) => {
-    $('#prompter').style.fontSize = `${event.target.value}px`;
-  });
-  $('#mirror').addEventListener('change', (event) => {
-    $('#prompter-view').classList.toggle('mirror', event.target.checked);
-  });
+
+  // --- Clavier --------------------------------------------------------------
 
   document.addEventListener('keydown', (event) => {
+    // Echap referme ce qui est ouvert, y compris depuis le champ d'edition.
+    if (event.key === 'Escape') {
+      if (!$('#settings').hidden) return toggleSettings(false);
+      if (!$('#library').hidden) return toggleLibrary(false);
+      if (state.editing) setEditing(false);
+      return;
+    }
     if (['TEXTAREA', 'INPUT', 'SELECT'].includes(event.target.tagName)) return;
     if (event.code === 'Space') { event.preventDefault(); if (state.running) stop(); else start(); }
-    if (event.key === 'l') setLocked(!state.locked);
+    if (event.key === 'e') setEditing(!state.editing);
     if (event.key === 'f') document.documentElement.requestFullscreen?.();
     // Rattrapage manuel : l'orateur reprend la main si le suivi decroche.
     if (event.key === 'ArrowDown') { state.aligner.cursor += 1; paint(state.aligner.position); }
@@ -360,7 +468,6 @@ function bind() {
   });
 
   setupEngines();
-  setLocked(false);
   setInterval(() => { if (state.running) updateStats(); }, 1000);
 }
 

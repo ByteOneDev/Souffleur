@@ -108,8 +108,11 @@ _italique_                nuance, aparté
 [[regarder le public]]    consigne de jeu, non prononcée
 ```
 
-Le texte se verrouille d'un clic (ou par `L`) : une fois en situation, une
-frappe accidentelle ne peut plus modifier le discours.
+L'écran a deux faces. En **lecture**, le texte est mis en page et rien ne peut
+l'atteindre : plus de champ de saisie sous les doigts, donc plus de frappe
+accidentelle en situation. En **édition** — un clic dans le texte, le bouton
+*éditer*, ou la touche `E` — le champ prend exactement la même colonne, la même
+police et la même taille : on écrit déjà ce qu'on lira.
 
 ## Charte graphique — « encre et ruban »
 
@@ -219,8 +222,9 @@ pas de clé partagée dans un binaire distribué.
 ## État et suite
 
 Fait : le moteur d'alignement et ses mesures, le prompteur avec annotations,
-chronométrage et verrouillage, la bibliothèque de discours, la charte graphique
-en deux thèmes, l'application de bureau et le projet Android.
+chronométrage, la bascule lecture / édition, la bibliothèque de discours, la
+charte graphique en deux thèmes, l'application de bureau — livrée en .dmg,
+installateur Windows et AppImage — et le projet Android.
 
 Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est le seul
 risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
