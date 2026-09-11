@@ -13,12 +13,45 @@
  *   - navigation et fenetres externes refusees : un lien ne peut pas emmener
  *     l'application ailleurs, il s'ouvre dans le navigateur du systeme.
  */
-import { app, BrowserWindow, nativeTheme, shell, systemPreferences } from 'electron';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { app, BrowserWindow, nativeTheme, net, protocol, shell, systemPreferences } from 'electron';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join, normalize, sep } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const PAGE = join(ROOT, 'index.html');
+
+/**
+ * L'application est servie par un schema a elle, et non en « file:// ».
+ *
+ * Ce n'est pas une preference d'ecriture : en « file:// », le fil principal de
+ * la page peut lire les fichiers voisins, mais pas les Web Workers. Or le
+ * moteur vocal charge le modele depuis un worker. L'appel echouait donc sur un
+ * « Failed to fetch » que rien ne remontait a l'utilisateur : le chargement
+ * restait suspendu jusqu'a expiration du delai, et l'application annoncait un
+ * modele « illisible » alors qu'il etait present et intact.
+ *
+ * Un schema declare « standard » et « secure » donne a la page une origine
+ * ordinaire. Les workers en heritent, le WebAssembly se charge, et le micro
+ * obtient le contexte securise qu'il exige.
+ */
+const SCHEMA = 'souffleur';
+const PAGE = `${SCHEMA}://app/index.html`;
+
+protocol.registerSchemesAsPrivileged([{
+  scheme: SCHEMA,
+  privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true },
+}]);
+
+/** Sert un fichier du dossier de l'application, et rien d'autre. */
+function servirFichier(request) {
+  const { pathname } = new URL(request.url);
+  const cible = normalize(join(ROOT, decodeURIComponent(pathname)));
+  // Une adresse remontant hors du dossier livre n'a aucune raison d'exister :
+  // elle est refusee plutot qu'interpretee.
+  if (cible !== ROOT && !cible.startsWith(ROOT + sep)) {
+    return new Response('Hors du dossier de l\'application', { status: 403 });
+  }
+  return net.fetch(pathToFileURL(cible).toString());
+}
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -41,7 +74,7 @@ function createWindow() {
     },
   });
 
-  window.loadFile(PAGE);
+  window.loadURL(PAGE);
 
   // Un lien externe s'ouvre dans le navigateur, jamais dans l'application.
   window.webContents.setWindowOpenHandler(({ url }) => {
@@ -49,7 +82,7 @@ function createWindow() {
     return { action: 'deny' };
   });
   window.webContents.on('will-navigate', (event, url) => {
-    if (!url.startsWith('file://')) event.preventDefault();
+    if (!url.startsWith(`${SCHEMA}://`)) event.preventDefault();
   });
 
   const suivreTheme = () => {
@@ -77,6 +110,7 @@ async function ensureMicrophone() {
 }
 
 app.whenReady().then(async () => {
+  protocol.handle(SCHEMA, servirFichier);
   await ensureMicrophone();
   createWindow();
   app.on('activate', () => {
