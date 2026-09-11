@@ -67,6 +67,27 @@ The build targets Apple Silicon Macs. For an Intel Mac, replace `arm64` with
 `x64` in the `build.mac.target` field of `package.json`, or use
 `["arm64", "x64"]` to ship both in one file.
 
+### Windows and Linux
+
+```bash
+npm run windows      # dist/Souffleur Setup 0.1.0.exe — a regular installer
+npm run linux        # dist/Souffleur-0.1.0.AppImage — x64 and arm64
+```
+
+Both are built **from the Mac**, with no Windows or Linux machine involved.
+
+The AppImage is not installed: it is a single file to make executable
+(`chmod +x`) and run. It works on every recent distribution, which saves
+maintaining one package per family.
+
+The `.deb` was set aside: its tooling (`fpm`) refuses to download behind some
+corporate networks. It can still be built from a Linux machine, or through
+Docker, by adding `"deb"` to the `build.linux` targets in `package.json`.
+
+The Windows installer is unsigned too: SmartScreen will warn on first launch —
+**More info → Run anyway**. A Windows signature is rented by the year, like
+Apple's.
+
 ### What the packaging settles, and what breaks without it
 
 - **The microphone sentence.** macOS requires a written explanation

@@ -64,6 +64,28 @@ La construction vise les Mac Apple Silicon. Pour un Mac Intel, remplacez
 `arm64` par `x64` dans le champ `build.mac.target` de `package.json`, ou
 mettez `["arm64", "x64"]` pour livrer les deux dans le même fichier.
 
+### Windows et Linux
+
+```bash
+npm run windows      # dist/Souffleur Setup 0.1.0.exe — installateur classique
+npm run linux        # dist/Souffleur-0.1.0.AppImage — x64 et arm64
+```
+
+Les deux se fabriquent **depuis le Mac**, sans machine Windows ni Linux.
+
+L'AppImage ne s'installe pas : c'est un fichier unique, à rendre exécutable
+(`chmod +x`) puis à lancer. Il fonctionne sur toutes les distributions récentes,
+ce qui évite d'entretenir un paquet par famille.
+
+Le `.deb` a été écarté : son outillage (`fpm`) refuse de se télécharger derrière
+certains réseaux d'entreprise. Il reste constructible depuis une machine Linux,
+ou par Docker, en rajoutant `"deb"` aux cibles `build.linux` de `package.json`.
+
+L'installateur Windows n'est pas signé non plus : SmartScreen affichera un
+avertissement au premier lancement, que l'on passe par **Informations
+complémentaires → Exécuter quand même**. Une signature Windows se loue à l'année,
+comme celle d'Apple.
+
 ### Ce que l'empaquetage règle, et qui casse si on l'oublie
 
 - **La phrase du micro.** macOS exige une explication écrite

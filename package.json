@@ -13,10 +13,12 @@
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
     "dmg": "node scripts/vendor.js && electron-builder --mac dmg",
+    "linux": "node scripts/vendor.js && electron-builder --linux",
     "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
     "test": "node --test test/*.test.js",
-    "vendor": "node scripts/vendor.js"
+    "vendor": "node scripts/vendor.js",
+    "windows": "node scripts/vendor.js && electron-builder --win"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
@@ -69,6 +71,35 @@
     },
     "dmg": {
       "title": "Souffleur ${version}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "Office",
+      "maintainer": "Souffleur",
+      "synopsis": "Telepromoteur qui suit la voix de l'orateur dans son texte"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
     }
   }
 }
