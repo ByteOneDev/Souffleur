@@ -12,6 +12,7 @@
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
+    "dmg": "node scripts/vendor.js && electron-builder --mac dmg",
     "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
     "test": "node --test test/*.test.js",
@@ -25,10 +26,49 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
-    "electron": "^44.3.0"
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3"
   },
   "main": "electron/main.js",
   "overrides": {
     "uuid": "^11.1.1"
+  },
+  "build": {
+    "appId": "fr.souffleur.app",
+    "productName": "Souffleur",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "index.html",
+      "src/**/*",
+      "vendor/**/*",
+      "tools/**/*",
+      "models/**/*",
+      "electron/**/*",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": false,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Souffleur écoute votre voix pour suivre votre place dans le texte. Rien ne sort de votre appareil."
+      },
+      "identity": "-",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
+    },
+    "dmg": {
+      "title": "Souffleur ${version}"
+    }
   }
 }

@@ -47,6 +47,61 @@ L'application s'ouvre dans sa propre fenêtre, sans navigateur. Sur macOS, elle
 demande l'autorisation du micro au lancement plutôt qu'au moment où vous
 appuyez sur **Démarrer**.
 
+### Fabriquer un .dmg — macOS
+
+Pour donner l'application à quelqu'un qui n'a ni Node ni le dépôt :
+
+```bash
+npm run model        # facultatif : embarque le modèle vocal dans le .dmg
+npm run dmg
+```
+
+Le fichier apparaît dans `dist/` : `Souffleur-0.1.0-arm64.dmg`. Il pèse
+environ 165 Mo, dont 40 Mo pour le modèle vocal s'il est présent — l'application
+fonctionne alors hors ligne dès la première ouverture, sans téléchargement.
+
+La construction vise les Mac Apple Silicon. Pour un Mac Intel, remplacez
+`arm64` par `x64` dans le champ `build.mac.target` de `package.json`, ou
+mettez `["arm64", "x64"]` pour livrer les deux dans le même fichier.
+
+### Ce que l'empaquetage règle, et qui casse si on l'oublie
+
+- **La phrase du micro.** macOS exige une explication écrite
+  (`NSMicrophoneUsageDescription`) avant de laisser une application demander
+  le micro. Sans elle, le système ne pose pas la question : il ferme
+  l'application.
+- **Les habilitations.** Le « hardened runtime » interdit par défaut la
+  compilation à la volée et la mémoire exécutable non signée, dont le moteur
+  JavaScript et le moteur vocal WebAssembly ont besoin. Elles sont déclarées
+  dans `build/entitlements.mac.plist`.
+- **Les fichiers laissés lisibles.** L'archive `asar` d'Electron est
+  désactivée : le modèle vocal et le binaire WebAssembly sont chargés par la
+  page en `fetch`, exactement comme en développement.
+- **`node_modules` exclu.** L'application est du web pur et ne lit aucun
+  fichier de npm à l'exécution ; seul `vendor/` est livré.
+
+### À la première ouverture, macOS refusera
+
+L'application n'est pas signée par un compte développeur Apple : elle porte une
+signature « ad hoc », suffisante pour qu'elle tourne, insuffisante pour que
+macOS l'ouvre d'un double-clic après un téléchargement. Le message parle
+d'application « endommagée » ou « d'un développeur non identifié » — il est
+trompeur : le fichier va très bien.
+
+Deux façons de passer :
+
+- **Clic droit → Ouvrir**, puis *Ouvrir* dans la fenêtre qui s'affiche. Une
+  seule fois, par personne, par machine.
+- Ou, si le message persiste, dans le Terminal :
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Souffleur.app
+```
+
+Faire disparaître cet avertissement pour de bon demande un compte développeur
+Apple à 99 $ par an, plus une signature et une notarisation à chaque version.
+C'est la même dépense qui a fait écarter iOS.
+
 ## Android
 
 ```bash
@@ -158,11 +213,93 @@ Build APK(s)*. Vous obtenez un fichier à envoyer par message ou par lien. Vos
 proches devront autoriser l'installation depuis une source inconnue — Android
 le propose au moment d'ouvrir le fichier. Gratuit, immédiat, aucun compte.
 
-**Par le Play Store.** Compte développeur Google à **25 $, une seule fois** (à
-ne pas confondre avec les 99 $ **par an** d'Apple pour iOS, raison pour
-laquelle iOS a été écarté). Installation en un clic et mises à jour
-automatiques, mais une validation à passer. À réserver au moment où l'outil
-sort du cercle proche.
+**Par le Play Store, en test interne.** Compte développeur Google à **25 $, une
+seule fois** (à ne pas confondre avec les 99 $ **par an** d'Apple pour iOS,
+raison pour laquelle iOS a été écarté). Installation en un clic, mises à jour
+automatiques, et — c'est le point important — **aucune publication au public** :
+la piste « test interne » diffuse l'application à une liste d'adresses que vous
+choisissez, cent au maximum. Voir la section suivante.
+
+## Publier en privé sur le Play Store — test interne
+
+C'est la voie prévue pour une diffusion réservée à une équipe. L'application
+n'apparaît nulle part dans le magasin : seules les personnes que vous inscrivez
+peuvent l'installer, par un lien.
+
+### 1. Le compte développeur — comptez quelques jours
+
+Créez-le sur [play.google.com/console](https://play.google.com/console) : 25 $
+une fois pour toutes. Google vérifie votre identité (pièce d'identité, adresse ;
+numéro D-U-N-S si vous vous inscrivez au nom d'une société). **C'est cette
+vérification qui prend le plus de temps** — de quelques heures à quelques jours.
+Rien d'autre ne peut avancer tant qu'elle n'est pas passée, alors lancez-la en
+premier.
+
+Une nuance utile : les comptes personnels récents doivent réunir douze testeurs
+pendant quatorze jours **avant de publier au public**. Le test interne échappe à
+cette règle. C'est une raison de plus de rester sur cette piste tant que l'outil
+ne sort pas de l'équipe.
+
+### 2. La clé de signature — à ne jamais perdre
+
+Dans Android Studio : *Build → Generate Signed App Bundle / APK → Android App
+Bundle → Create new…*. Vous choisissez un fichier `.jks` et deux mots de passe.
+
+**Sauvegardez ce fichier et ces mots de passe ailleurs que sur votre machine.**
+Une application Android est identifiée par sa clé : perdue, plus aucune mise à
+jour n'est possible et il faut republier sous un autre nom. Acceptez au passage
+la **signature d'applications Play**, qui met une copie de la clé à l'abri chez
+Google.
+
+Le fichier produit est un `.aab` — c'est ce que le Play Store attend, là où
+l'APK reste réservé à l'envoi direct de la main à la main.
+
+### 3. Créer l'application dans la console
+
+*Créer une application*, en renseignant le nom, la langue, « Application » et
+« Gratuite ». Le nom de paquet est déjà fixé par le projet — `fr.souffleur.app`
+— et **il est définitif** : on ne le change plus après le premier envoi.
+
+### 4. Les déclarations obligatoires
+
+La console ne laisse rien publier tant que la section *Contenu de l'application*
+n'est pas remplie. Pour Souffleur :
+
+- **Politique de confidentialité** — une adresse web est exigée dès qu'une
+  application demande le micro. Une page publique suffit ; elle doit dire ce que
+  dit déjà le projet : l'audio est analysé sur l'appareil et n'est envoyé nulle
+  part.
+- **Sécurité des données** — déclarez qu'aucune donnée n'est collectée ni
+  partagée. C'est exact avec le moteur Vosk, qui travaille hors ligne. Cela
+  cesserait de l'être avec un moteur de reconnaissance distant : ce formulaire
+  serait alors à corriger.
+- **Classification du contenu**, **public visé**, **publicités** (aucune),
+  **accès à l'application** (rien n'est réservé).
+
+### 5. Envoyer et inviter
+
+*Tests → Test interne → Créer une release*, déposez le `.aab`, puis dans
+l'onglet *Testeurs* créez une liste avec les adresses Gmail de vos développeurs.
+Publiez la release.
+
+La console affiche alors un **lien d'inscription**. Chacun l'ouvre, accepte
+d'être testeur, et l'application s'installe depuis le Play Store comme n'importe
+quelle autre. Comptez quelques minutes de traitement — pas les jours d'examen
+d'une publication publique.
+
+Pour la version suivante, augmentez `versionCode` dans
+`android/app/build.gradle` (Google refuse deux envois portant le même numéro),
+reconstruisez, redéposez : la mise à jour part toute seule sur les téléphones.
+
+### Plus rapide encore : le partage interne
+
+Si vous ne cherchez qu'à faire essayer une version de travail, la console offre
+*Partage interne d'applications* : vous déposez un `.aab` ou un `.apk`, vous
+obtenez un lien, personne n'a besoin d'être inscrit sur une liste et il n'y a
+aucun examen. Le lien expire, il n'apporte pas de mise à jour automatique, et le
+testeur doit avoir activé le partage interne dans son application Play Store.
+C'est l'équivalent de l'APK envoyé par message, avec l'installation en un clic
+en plus.
 
 ## iOS
 

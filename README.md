@@ -168,6 +168,7 @@ standard, exécutable directement par le navigateur et par Node.
 
 ```bash
 npm run app        # lance l'application de bureau
+npm run dmg        # fabrique dist/Souffleur-<version>-arm64.dmg (macOS)
 npm run android    # assemble et ouvre le projet dans Android Studio
 ```
 
