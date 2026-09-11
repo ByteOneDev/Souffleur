@@ -127,11 +127,25 @@ body.locked textarea { color: var(--ink-faint); cursor: not-allowed; }
 .segmented { display: flex; gap: var(--space-1); }
 .segmented label {
   flex: 1; margin: 0; text-align: center; cursor: pointer;
+  /* Repere de positionnement du bouton radio cache, juste en dessous. */
+  position: relative;
   border: var(--border); border-radius: var(--radius);
   padding: var(--space-2); color: var(--ink-soft);
   transition: all var(--motion-fast) var(--ease);
 }
-.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+/*
+ * Le bouton radio reste dans la page — sinon il sort du parcours au clavier —
+ * mais invisible, l'etiquette servant de surface cliquable.
+ *
+ * Le « position: relative » de l'etiquette ci-dessus n'est pas cosmetique :
+ * sans lui, ces boutons se rattachent au document entier plutot qu'a leur
+ * etiquette. Ils se posent alors sous le bas de la fenetre — la colonne de
+ * gauche defile dans son propre cadre, eux n'y sont plus — et rendent la page
+ * plus haute que l'ecran. Au premier clic, le navigateur fait defiler toute
+ * l'application pour aller les chercher : les indicateurs disparaissent en
+ * haut et le bas du texte passe sous le cadre.
+ */
+.segmented input { position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none; }
 .segmented label:has(input:checked) {
   background: var(--ink); border-color: var(--ink); color: var(--paper); font-weight: 500;
 }
@@ -197,7 +211,22 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 
 #message { margin: 0; padding: var(--space-2) var(--space-5); font-size: var(--text-sm); color: var(--ribbon); min-height: 1.6em; }
 
-#prompter-view { flex: 1; overflow-y: auto; padding: 25vh var(--space-6) 60vh; scroll-behavior: smooth; }
+#prompter-view {
+  flex: 1;
+  /* Sans cette ligne, la zone refuse de descendre sous la hauteur de son
+     contenu et deborde du cadre au lieu de defiler. */
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-6);
+  scroll-behavior: smooth;
+  /*
+   * Repere de mesure. Le defilement vise « offsetTop du mot courant moins un
+   * tiers de hauteur d'ecran » : sans cette ligne, offsetTop se compte depuis
+   * la page entiere, indicateurs compris, et la ligne suivie se pose plus bas
+   * que le tiers vise.
+   */
+  position: relative;
+}
 #prompter-view.mirror { transform: scaleX(-1); }
 #prompter {
   font-family: var(--font-read);
@@ -206,6 +235,18 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
   max-width: 20em;
   margin: 0 auto;
   color: var(--read-ahead);
+  /*
+   * Le vide avant la premiere ligne et apres la derniere : il permet de garder
+   * la ligne lue au tiers de l'ecran du debut a la fin du texte.
+   *
+   * Il est porte par le texte, et non par la zone qui le fait defiler. Une
+   * marge interieure ne se comprime pas : posee sur la zone, ces 85 vh
+   * devenaient une hauteur minimale, le cadre debordait de l'ecran sur une
+   * fenetre basse ou sur un telephone, et la page entiere se mettait a defiler
+   * — indicateurs emportes vers le haut, bas du texte coupe. Posee ici, la
+   * meme hauteur est du contenu ordinaire, qui defile.
+   */
+  padding: 25vh 0 60vh;
 }
 #prompter.mono { font-family: var(--font-ui); max-width: 26em; }
 
