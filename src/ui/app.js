@@ -277,6 +277,14 @@ async function stop() {
 function setEditing(editing) {
   // Pendant qu'on parle, le texte ne bouge pas.
   if (editing && state.running) return;
+  /*
+   * Seule une sortie d'edition justifie de reconstruire le texte lu — et donc
+   * de repartir d'un aligneur neuf, curseur remis a zero. Demander la lecture
+   * alors qu'on y est deja ne doit rien reconstruire : sinon, l'orateur qui
+   * s'arrete en plein discours et repart se retrouve ramene au premier mot,
+   * alors que « Revenir au debut » existe justement pour le demander.
+   */
+  const sortieDEdition = state.editing && !editing;
   state.editing = editing;
 
   const view = $('#prompter-view');
@@ -295,7 +303,7 @@ function setEditing(editing) {
   if (editing) {
     ajusterChamp();
     $('#source').focus();
-  } else {
+  } else if (sortieDEdition) {
     prepare($('#source').value);
   }
 

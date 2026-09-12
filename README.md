@@ -234,8 +234,10 @@ charte graphique en deux thèmes, l'application de bureau — livrée en .dmg,
 installateur Windows et AppImage — et le projet Android.
 
 Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est le seul
-risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
-la [documentation d'installation](doc/francais/installation.md)).
+risque restant. Le banc `tools/android-check.html` le tranche en cinq minutes,
+mais la vérification est **en attente** : voir la section correspondante de la
+[documentation d'installation](doc/francais/installation.md), qui explique
+pourquoi et par où reprendre.
 
 
 À venir : découpage par sections avec durée cible, analyse de répétition, import

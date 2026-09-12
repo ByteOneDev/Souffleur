@@ -205,6 +205,36 @@ https://<adresse-locale-de-l-ordinateur>:5173/tools/android-check.html
 Le certificat est auto-signé : Chrome affichera un avertissement. Touchez
 **Paramètres avancés → Continuer vers le site**. À faire une seule fois.
 
+> **Si le téléphone affiche « site inaccessible »**, le problème n'est
+> probablement ni le réseau ni le certificat, mais le pare-feu de macOS. Il
+> mémorise un refus par application, et un « non » donné un jour à la fenêtre
+> « node accepte-t-il les connexions entrantes ? » rend tout serveur Node
+> injoignable depuis le réseau, sans autre message que celui-là.
+>
+> Le diagnostic tient en deux commandes, depuis le Mac :
+>
+> ```bash
+> curl -sk -o /dev/null -w "%{http_code}\n" https://localhost:5173/
+> curl -sk -o /dev/null -w "%{http_code}\n" https://<votre-adresse-locale>:5173/
+> ```
+>
+> Si la première répond `200` et la seconde échoue, c'est le pare-feu : le
+> serveur va bien, seule l'interface réseau est filtrée. `node` apparaît alors
+> dans `/usr/libexec/ApplicationFirewall/socketfilterfw --listapps` avec la
+> mention *Block incoming connections*.
+>
+> **Sans toucher au pare-feu**, le câble USB contourne la question :
+>
+> ```bash
+> brew install --cask android-platform-tools
+> adb reverse tcp:5173 tcp:5173
+> ```
+>
+> Le téléphone voit alors le serveur sur son propre `localhost`, à ouvrir en
+> `http://localhost:5173/tools/android-check.html`. Ni réseau, ni pare-feu, ni
+> avertissement de certificat — `localhost` est un contexte sécurisé de plein
+> droit, donc le micro fonctionne même en HTTP.
+
 **4. Déroulez les cinq étapes** dans l'ordre, en autorisant le micro quand il
 le demande. La dernière vous fait lire une phrase à voix haute — lisez-la au
 rythme d'un discours, pas plus vite.

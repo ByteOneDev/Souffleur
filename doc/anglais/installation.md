@@ -202,6 +202,36 @@ https://<computer-local-address>:5173/tools/android-check.html
 The certificate is self-signed, so Chrome will warn you. Tap **Advanced →
 Proceed to the site**. Once only.
 
+> **If the phone says the site is unreachable**, the cause is most likely
+> neither the network nor the certificate, but the macOS firewall. It remembers
+> a refusal per application, and a "no" given once to the "do you want node to
+> accept incoming connections?" dialog makes every Node server unreachable from
+> the network, with no message other than that one.
+>
+> Two commands from the Mac settle it:
+>
+> ```bash
+> curl -sk -o /dev/null -w "%{http_code}\n" https://localhost:5173/
+> curl -sk -o /dev/null -w "%{http_code}\n" https://<your-local-address>:5173/
+> ```
+>
+> If the first answers `200` and the second fails, it is the firewall: the
+> server is fine, only the network interface is filtered. `node` then appears in
+> `/usr/libexec/ApplicationFirewall/socketfilterfw --listapps` marked *Block
+> incoming connections*.
+>
+> **Without touching the firewall**, the USB cable sidesteps the question:
+>
+> ```bash
+> brew install --cask android-platform-tools
+> adb reverse tcp:5173 tcp:5173
+> ```
+>
+> The phone then reaches the server on its own `localhost`, at
+> `http://localhost:5173/tools/android-check.html`. No network, no firewall, and
+> no certificate warning — `localhost` is a secure context in its own right, so
+> the microphone works over plain HTTP.
+
 **4. Run the five steps** in order, allowing the microphone when asked. The last
 one has you read a sentence aloud — read it at speaking pace, no faster.
 
