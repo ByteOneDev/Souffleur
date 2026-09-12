@@ -51,16 +51,46 @@ function adressesLocales() {
  * locales : sans elles dans le certificat, le telephone refuse la connexion
  * avant meme de proposer l'avertissement.
  */
+/** Les adresses que couvre un certificat deja engendre. */
+async function adressesDuCertificat(cert) {
+  try {
+    const { stdout } = await run('openssl', ['x509', '-in', cert, '-noout', '-ext', 'subjectAltName']);
+    return [...stdout.matchAll(/IP Address:([\d.]+)/g)].map((trouve) => trouve[1]);
+  } catch {
+    return [];
+  }
+}
+
 async function certificat() {
   const dossier = join(ROOT, '.certs');
   const cle = join(dossier, 'dev-key.pem');
   const cert = join(dossier, 'dev-cert.pem');
+  const locales = adressesLocales();
+
+  /*
+   * Un certificat garde les adresses qu'il avait le jour ou il a ete engendre.
+   * Changez de reseau — un autre bureau, un partage de connexion — et il ne
+   * couvre plus la machine. Le telephone refuse alors la connexion sans meme
+   * proposer l'avertissement habituel, et le message parle d'un serveur
+   * injoignable : on cherche le probleme du cote du reseau pendant que le
+   * certificat, lui, est simplement perime.
+   *
+   * Il est donc reengendre des qu'une adresse du moment n'y figure pas.
+   */
+  let valable = false;
   try {
     await access(cle);
     await access(cert);
+    const couvertes = await adressesDuCertificat(cert);
+    valable = locales.every((adresse) => couvertes.includes(adresse));
+    if (!valable) console.log('Adresse du réseau changée : certificat réengendré.');
   } catch {
+    valable = false;
+  }
+
+  if (!valable) {
     await mkdir(dossier, { recursive: true });
-    const noms = ['DNS:localhost', 'IP:127.0.0.1', ...adressesLocales().map((a) => `IP:${a}`)];
+    const noms = ['DNS:localhost', 'IP:127.0.0.1', ...locales.map((a) => `IP:${a}`)];
     await run('openssl', [
       'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '365',
       '-keyout', cle, '-out', cert,
