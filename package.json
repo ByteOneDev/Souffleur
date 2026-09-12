@@ -12,13 +12,14 @@
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
-    "dmg": "node scripts/vendor.js && electron-builder --mac dmg",
-    "linux": "node scripts/vendor.js && electron-builder --linux",
+    "dmg": "npm run preparer && electron-builder --mac dmg",
+    "linux": "npm run preparer && electron-builder --linux",
     "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
+    "preparer": "node scripts/vendor.js && node scripts/build-check.js",
     "test": "node --test test/*.test.js",
     "vendor": "node scripts/vendor.js",
-    "windows": "node scripts/vendor.js && electron-builder --win"
+    "windows": "npm run preparer && electron-builder --win"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
@@ -38,18 +39,20 @@
   "build": {
     "appId": "fr.souffleur.app",
     "productName": "Souffleur",
+    "copyright": "Souffleur",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "index.html",
       "src/**/*",
       "vendor/**/*",
-      "tools/**/*",
       "models/**/*",
       "electron/**/*",
       "package.json",
-      "!node_modules/**/*"
+      "!node_modules/**/*",
+      "!**/*.map"
     ],
     "asar": false,
     "mac": {
@@ -62,15 +65,46 @@
           ]
         }
       ],
+      "icon": "build/icon.png",
+      "darkModeSupport": true,
       "extendInfo": {
-        "NSMicrophoneUsageDescription": "Souffleur écoute votre voix pour suivre votre place dans le texte. Rien ne sort de votre appareil."
+        "NSMicrophoneUsageDescription": "Souffleur écoute votre voix pour suivre votre position dans le texte. L'audio ne quitte jamais cet appareil."
       },
       "identity": "-",
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": {
-      "title": "Souffleur ${version}"
+      "title": "Souffleur ${version}",
+      "contents": [
+        {
+          "x": 140,
+          "y": 200,
+          "type": "file"
+        },
+        {
+          "x": 400,
+          "y": 200,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
     },
     "linux": {
       "target": [
@@ -82,24 +116,10 @@
           ]
         }
       ],
+      "icon": "build/icon.png",
       "category": "Office",
       "maintainer": "Souffleur",
-      "synopsis": "Telepromoteur qui suit la voix de l'orateur dans son texte"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "perMachine": false
+      "synopsis": "Téléprompteur qui suit la voix de l'orateur dans son texte"
     }
   }
 }

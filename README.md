@@ -173,7 +173,11 @@ standard, exécutable directement par le navigateur et par Node.
 npm run app        # lance l'application de bureau
 npm run dmg        # fabrique dist/Souffleur-<version>-arm64.dmg (macOS)
 npm run android    # assemble et ouvre le projet dans Android Studio
+npm run dist:mac   # fabrique le .dmg (à lancer sur un Mac)
 ```
+
+Pour distribuer l'application — `.dmg` signé ou non, test interne du Play Store
+— voir **[doc/francais/publier.md](doc/francais/publier.md)**.
 
 Voir **[doc/francais/installation.md](doc/francais/installation.md)** pour
 l'explication complète : ce que fait chaque outil, comment compiler sur votre
@@ -215,9 +219,12 @@ détail qui coûte trois jours si on le découvre en route. La contrainte connue
 le modèle français de ~50 Mo restera à valider dans le WebView d'Android, et
 c'est précisément pour ça que l'adaptateur existe.
 
-**L'IA se branchera en BYOK.** L'utilisateur fournit sa propre clé Claude,
-stockée localement : pas de backend à héberger, pas de coût de fonctionnement,
-pas de clé partagée dans un binaire distribué.
+**Aucune assistance rédactionnelle embarquée.** Écrire un discours se fait très
+bien avec l'outil d'écriture qu'on a déjà ; l'embarquer ici aurait ajouté une
+clé d'API à gérer, un secret à ne pas fuiter, une dépendance réseau et une
+réserve dans la politique de confidentialité — pour une fonction que rien
+n'oblige à vivre dans le prompteur. Souffleur suit la voix dans un texte, et
+rien d'autre.
 
 ## État et suite
 
@@ -230,6 +237,6 @@ Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est 
 risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
 la [documentation d'installation](doc/francais/installation.md)).
 
-À venir : découpage par sections avec durée cible, fonctions IA (réécriture pour
-l'oral, ajustement à une durée, fiches de secours), analyse de répétition,
-import de documents, et télécommande depuis le téléphone.
+
+À venir : découpage par sections avec durée cible, analyse de répétition, import
+de documents, et télécommande depuis le téléphone.

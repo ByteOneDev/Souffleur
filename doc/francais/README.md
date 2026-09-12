@@ -10,8 +10,12 @@ en avance ou en retard.
    situation. Commencez ici.
 2. **[Installation](installation.md)** — ordinateur, Android, et comment donner
    l'application à des proches.
-3. **[Comment ça marche](fonctionnement.md)** — le suivi vocal expliqué, les
+3. **[Distribuer l'application](publier.md)** — fabriquer le `.dmg` pour Mac,
+   publier sur le Play Store en test interne pour vos proches.
+4. **[Comment ça marche](fonctionnement.md)** — le suivi vocal expliqué, les
    mesures, les moteurs de reconnaissance et leurs limites.
+5. **[Politique de confidentialité](confidentialite.md)** — ce que
+   l'application fait, et surtout ne fait pas, de vos données.
 
 ## En trente secondes
 

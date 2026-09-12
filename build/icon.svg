@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- L'icone dit ce que fait le logiciel : une ligne de texte parmi d'autres,
+       eclairee au mot en cours ; et le ruban bicolore de la machine a ecrire. -->
+  <rect width="1024" height="1024" rx="224" fill="#121316"/>
+  <rect x="112" y="176" width="34" height="672" rx="17" fill="#e0554a"/>
+  <rect x="112" y="512" width="34" height="336" rx="17" fill="#e9e4d9"/>
+  <g fill="#4e4a43">
+    <rect x="232" y="300" width="560" height="46" rx="23"/>
+    <rect x="232" y="392" width="432" height="46" rx="23"/>
+  </g>
+  <rect x="200" y="472" width="624" height="104" rx="30" fill="#38301c"/>
+  <rect x="232" y="500" width="336" height="48" rx="24" fill="#e2ac4e"/>
+  <g fill="#e9e4d9">
+    <rect x="608" y="502" width="184" height="44" rx="22"/>
+    <rect x="232" y="632" width="512" height="46" rx="23"/>
+    <rect x="232" y="724" width="392" height="46" rx="23"/>
+  </g>
+</svg>
