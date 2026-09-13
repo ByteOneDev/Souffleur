@@ -18,8 +18,14 @@ Le choix se change à tout moment, y compris en pleine préparation.
 
 ## 2. Écrire et annoter le texte
 
-Écrivez ou collez votre texte dans le panneau de gauche. Six annotations sont
-disponibles :
+Cliquez dans le texte, au milieu de l'écran — ou appuyez sur **éditer**, ou sur
+la touche `E`. Le texte devient modifiable **là où il est**, dans la même
+colonne, la même police et la même taille : ce que vous écrivez est déjà mis en
+page comme ce que vous lirez.
+
+Un second clic sur **lire**, ou `Échap`, revient à la lecture.
+
+Six annotations sont disponibles :
 
 | Vous écrivez | Ce que ça fait |
 |---|---|
@@ -47,7 +53,8 @@ oubliée : la technique n'est ==jamais neutre==.
 
 ## 3. Régler la durée visée
 
-Indiquez la durée que vous visez, en minutes. Dès que vous commencez à lire,
+Ouvrez les réglages — l'engrenage, en haut à droite — et poussez le curseur
+**Durée visée**. Dès que vous commencez à lire,
 l'indicateur **Avance / retard** compare votre progression réelle au temps
 écoulé et affiche l'écart :
 
@@ -66,20 +73,22 @@ fin que vous avez pris dix minutes de trop.
   fixe de l'interface. Essayez les deux, gardez celle qui vous fatigue le moins.
 - **Mode miroir** : inverse le texte horizontalement, pour un prompteur
   physique à vitre semi-réfléchissante.
-- **Thème** : le bouton en haut à gauche cycle entre automatique, clair et
-  sombre. En salle, le sombre fatigue moins les yeux et éclaire moins votre
-  visage.
+- **Thème** : automatique, clair ou sombre. En salle, le sombre fatigue moins
+  les yeux et éclaire moins votre visage.
 
-## 5. Verrouiller le texte
+Tous ces réglages vivent dans le panneau de l'engrenage, qui glisse par-dessus
+le texte sans le masquer : vous voyez l'effet du curseur pendant que vous le
+poussez.
 
-Le bouton **🔓 modifiable** bascule en **🔒 verrouillé** (ou la touche `L`).
-Une fois verrouillé, ni le texte ni le titre ne peuvent être modifiés.
+## 5. Le texte est protégé de lui-même
 
-À faire systématiquement avant de monter sur scène : il suffit d'une touche
-frappée par mégarde pour abîmer un texte qu'on ne relira plus.
+Il n'y a rien à verrouiller avant de monter sur scène. En lecture, le texte
+n'est plus un champ de saisie mais une page composée : aucune touche frappée par
+mégarde ne peut l'abîmer.
 
-C'est une sécurité d'usage, pas une protection informatique : le verrou se
-retire d'un clic.
+L'édition, elle, se referme d'elle-même au démarrage de la lecture, et le bouton
+**éditer** reste inactif tant que le suivi tourne. Pendant que vous parlez, le
+texte ne bouge pas.
 
 ## 6. Lire
 
@@ -101,51 +110,20 @@ Les flèches `↑` et `↓` déplacent le curseur d'un mot. Le moteur reprend le
 suivi à partir de là. En pratique, il se rattrape seul dans la plupart des cas,
 y compris après un paragraphe entièrement sauté.
 
-## 7. L'assistance rédactionnelle
-
-Quatre fonctions, dans le panneau **Assistance**. Elles demandent une clé
-Anthropic, que vous fournissez vous-même.
-
-| Fonction | Ce qu'elle fait |
-|---|---|
-| **Réécrire pour l'oral** | Casse les phrases longues, supprime les tournures qui ne passent qu'à l'écrit, place les pauses et souligne les mots à appuyer |
-| **Ajuster à la durée visée** | Allonge ou raccourcit pour tenir dans le temps que vous avez indiqué, en préservant l'ouverture et la chute |
-| **Fiches de secours** | Une ligne par idée, avec les premiers mots exacts de chaque passage — ce que vous regardez si vous perdez le fil, debout, sous tension |
-| **Questions du public** | Les six questions les plus probables, la plus redoutable en premier, avec ce qui les rend difficiles. Au moins deux objections de fond, et vos angles morts nommés |
-
-**Votre texte n'est jamais remplacé sans votre accord.** Une réécriture
-s'affiche d'abord en bas de l'écran ; c'est vous qui décidez de l'appliquer.
-
-### La clé
-
-Le principe est celui du « apportez votre propre clé » : chacun fournit la
-sienne, elle est rangée sur son appareil, et aucune clé n'est livrée avec
-l'application. C'est ce qui permet de partager l'outil sans partager de secret
-et sans héberger le moindre serveur.
-
-Obtenez-en une sur [console.anthropic.com](https://console.anthropic.com), puis
-collez-la dans le panneau. Elle n'est jamais réaffichée en entier ; le bouton
-**effacer la clé** la retire.
-
-Une réserve honnête : la clé circule depuis l'application, ce qui la rend
-lisible par qui a accès à votre appareil — comme n'importe quel mot de passe
-enregistré dans un navigateur. Sur votre machine personnelle, c'est le
-compromis normal ; sur un poste partagé, effacez-la après usage.
-
-Le texte que vous soumettez est envoyé à Anthropic et traité selon ses
-conditions. Les quatre autres fonctions de l'application — le suivi vocal, le
-chronométrage, la bibliothèque — n'envoient rien nulle part.
-
 ## Raccourcis clavier
 
 | Touche | Effet |
 |---|---|
 | `Espace` | démarrer ou arrêter |
-| `L` | verrouiller ou déverrouiller le texte |
+| `E` | passer de la lecture à l'édition |
+| `Échap` | refermer les réglages, le menu, ou l'édition |
 | `F` | plein écran |
 | `↑` `↓` | rattraper la position d'un mot |
 
 ## Vos textes
+
+Le titre affiché en haut de l'écran est aussi le menu de vos textes : déroulez-le
+pour en choisir un autre, en créer un, ou supprimer celui qui est ouvert.
 
 Chaque texte est enregistré automatiquement pendant que vous tapez, avec son
 titre, son nombre de mots et sa durée estimée. La liste est classée du plus

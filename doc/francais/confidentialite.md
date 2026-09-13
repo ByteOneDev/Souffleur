@@ -40,17 +40,12 @@ supprime définitivement.
 
 ## Connexions réseau
 
-L'application n'accède au réseau que dans deux cas :
+L'application n'accède au réseau que dans un seul cas : **le téléchargement du
+modèle vocal**, une seule fois, depuis `alphacephei.com`. Aucune donnée
+personnelle n'accompagne cette requête.
 
-1. **Le téléchargement du modèle vocal**, une seule fois, depuis
-   `alphacephei.com`. Aucune donnée personnelle n'accompagne cette requête.
-2. **Les fonctions d'assistance rédactionnelle**, si vous en ajoutez une en
-   fournissant votre propre clé d'interface de programmation. Le texte que vous
-   soumettez est alors envoyé au fournisseur que vous avez choisi, selon ses
-   conditions. Votre clé est rangée sur votre appareil et ne nous parvient
-   jamais.
-
-En dehors de ces deux cas, l'application fonctionne hors ligne.
+En dehors de ce téléchargement, l'application fonctionne hors ligne. Votre texte
+et votre voix ne quittent jamais votre appareil.
 
 ## Autorisations demandées
 

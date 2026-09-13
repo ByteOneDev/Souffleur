@@ -18,7 +18,14 @@ You can switch at any time, including mid-preparation.
 
 ## 2. Write and annotate the text
 
-Type or paste your text in the left panel. Six annotations are available:
+Click into the text, in the middle of the screen — or press **éditer**, or the
+`E` key. The text becomes editable **where it stands**, in the same column, the
+same typeface and the same size: what you write is already laid out like what
+you will read.
+
+Clicking **lire** again, or pressing `Escape`, returns to reading.
+
+Six annotations are available:
 
 | You write | What it does |
 |---|---|
@@ -46,8 +53,8 @@ forgotten: technology is ==never neutral==.
 
 ## 3. Set the target duration
 
-Enter the duration you are aiming for, in minutes. As soon as you start
-reading, the **Ahead / behind** indicator compares your actual progress with
+Open the settings — the gear, top right — and push the **Durée visée** slider.
+As soon as you start reading, the **Ahead / behind** indicator compares your actual progress with
 the elapsed time:
 
 - **green**: you are on schedule;
@@ -65,18 +72,19 @@ the end that you ran ten minutes over.
   Try both, keep whichever tires you less.
 - **Mirror mode**: flips the text horizontally, for a physical teleprompter
   with a half-silvered glass.
-- **Theme**: the button at the top left cycles through automatic, light and
-  dark. In a darkened room, dark tires the eyes less and lights your face less.
+- **Theme**: automatic, light or dark. In a darkened room, dark tires the eyes
+  less and lights your face less.
 
-## 5. Lock the text
+All of these live in the gear panel, which slides over the text without hiding
+it: you see what a slider does while you push it.
 
-The **🔓 modifiable** button switches to **🔒 locked** (or press `L`). Once
-locked, neither the text nor the title can be changed.
+## 5. The text protects itself
 
-Do this every time before going on stage: one stray keystroke is enough to
-damage a text you will not proofread again.
+There is nothing to lock before going on stage. In reading mode the text is no
+longer an input field but a composed page: no stray keystroke can damage it.
 
-It is a safety catch, not a security feature: one click removes it.
+Editing closes itself when reading starts, and the **éditer** button stays
+disabled while tracking runs. While you speak, the text does not move.
 
 ## 6. Read
 
@@ -99,51 +107,20 @@ The `↑` and `↓` arrows move the cursor one word. The engine resumes from the
 In practice it recovers on its own in most cases, including after an entirely
 skipped paragraph.
 
-## 7. Writing assistance
-
-Four functions, in the **Assistance** panel. They need an Anthropic key, which
-you supply yourself.
-
-| Function | What it does |
-|---|---|
-| **Rewrite for speaking** | Breaks up long sentences, removes constructions that only work on the page, places pauses and marks the words to stress |
-| **Fit the target duration** | Expands or trims to fit the time you set, preserving the opening and the closing |
-| **Backup cards** | One line per idea, with the exact opening words of each passage — what you glance at if you lose your place, standing, under pressure |
-| **Audience questions** | The six most likely questions, the most dangerous first, with what makes each hard. At least two substantive objections, and your blind spots named |
-
-**Your text is never replaced without your consent.** A rewrite appears at the
-bottom of the screen first; you decide whether to apply it.
-
-### The key
-
-The principle is bring-your-own-key: each person supplies their own, it is
-stored on their device, and no key ships with the app. That is what makes it
-possible to share the tool without sharing a secret and without hosting a
-server.
-
-Get one at [console.anthropic.com](https://console.anthropic.com), then paste it
-into the panel. It is never shown in full again; the **effacer la clé** button
-removes it.
-
-An honest caveat: the key travels from the app itself, which makes it readable
-by anyone with access to your device — like any password saved in a browser. On
-your own machine that is the normal trade-off; on a shared computer, clear it
-after use.
-
-The text you submit is sent to Anthropic and handled under their terms. The
-app's other functions — voice tracking, timing, the library — send nothing
-anywhere.
-
 ## Keyboard shortcuts
 
 | Key | Effect |
 |---|---|
 | `Space` | start or stop |
-| `L` | lock or unlock the text |
+| `E` | switch between reading and editing |
+| `Escape` | close the settings, the menu, or editing |
 | `F` | full screen |
 | `↑` `↓` | nudge the position by one word |
 
 ## Your texts
+
+The title shown at the top of the screen is also the menu of your texts: open
+it to pick another, create one, or delete the one in front of you.
 
 Each text is saved automatically as you type, with its title, word count and
 estimated duration. The list is sorted most recently edited first, and the

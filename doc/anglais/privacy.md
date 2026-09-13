@@ -36,15 +36,11 @@ or clearing its data deletes them permanently.
 
 ## Network connections
 
-The app reaches the network in two cases only:
+The app reaches the network in one case only: **downloading the speech model**,
+once, from `alphacephei.com`. No personal data accompanies that request.
 
-1. **Downloading the speech model**, once, from `alphacephei.com`. No personal
-   data accompanies that request.
-2. **Writing-assistance features**, if you add one by supplying your own API
-   key. The text you submit is then sent to the provider you chose, under their
-   terms. Your key is stored on your device and never reaches us.
-
-Outside these two cases, the app works offline.
+Outside that download, the app works offline. Your text and your voice never
+leave your device.
 
 ## Permissions requested
 

@@ -50,6 +50,80 @@ npm run app
 The app opens in its own window, without a browser. On macOS it asks for
 microphone permission at launch rather than when you press **Start**.
 
+### Building a .dmg — macOS
+
+To hand the app to someone who has neither Node nor the repository:
+
+```bash
+npm run model        # optional: embeds the speech model in the .dmg
+npm run dmg
+```
+
+The file lands in `dist/`: `Souffleur-0.1.0-arm64.dmg`. It weighs about
+165 MB, 40 MB of which is the speech model when present — the app then works
+offline from its very first launch, with nothing left to download.
+
+The build targets Apple Silicon Macs. For an Intel Mac, replace `arm64` with
+`x64` in the `build.mac.target` field of `package.json`, or use
+`["arm64", "x64"]` to ship both in one file.
+
+### Windows and Linux
+
+```bash
+npm run windows      # dist/Souffleur Setup 0.1.0.exe — a regular installer
+npm run linux        # dist/Souffleur-0.1.0.AppImage — x64 and arm64
+```
+
+Both are built **from the Mac**, with no Windows or Linux machine involved.
+
+The AppImage is not installed: it is a single file to make executable
+(`chmod +x`) and run. It works on every recent distribution, which saves
+maintaining one package per family.
+
+The `.deb` was set aside: its tooling (`fpm`) refuses to download behind some
+corporate networks. It can still be built from a Linux machine, or through
+Docker, by adding `"deb"` to the `build.linux` targets in `package.json`.
+
+The Windows installer is unsigned too: SmartScreen will warn on first launch —
+**More info → Run anyway**. A Windows signature is rented by the year, like
+Apple's.
+
+### What the packaging settles, and what breaks without it
+
+- **The microphone sentence.** macOS requires a written explanation
+  (`NSMicrophoneUsageDescription`) before an app may even ask for the
+  microphone. Without it the system does not ask the question: it kills the app.
+- **The entitlements.** The hardened runtime forbids just-in-time compilation
+  and unsigned executable memory by default — both of which the JavaScript
+  engine and the WebAssembly speech engine need. They are declared in
+  `build/entitlements.mac.plist`.
+- **Files left readable.** Electron's `asar` archive is disabled: the speech
+  model and the WebAssembly binary are loaded by the page with `fetch`,
+  exactly as in development.
+- **`node_modules` excluded.** The app is pure web and reads no npm file at
+  runtime; only `vendor/` ships.
+
+### On first launch, macOS will refuse
+
+The app is not signed by an Apple developer account: it carries an ad-hoc
+signature, enough for it to run, not enough for macOS to open it on a
+double-click after a download. The message says the app is "damaged" or comes
+from "an unidentified developer" — it is misleading: the file is fine.
+
+Two ways through:
+
+- **Right-click → Open**, then *Open* in the dialog. Once per person, per
+  machine.
+- Or, if the message persists, in the Terminal:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Souffleur.app
+```
+
+Making that warning go away for good takes an Apple developer account at $99 a
+year, plus signing and notarisation on every release. It is the same cost that
+ruled out iOS.
+
 ## Android
 
 ```bash
@@ -128,6 +202,36 @@ https://<computer-local-address>:5173/tools/android-check.html
 The certificate is self-signed, so Chrome will warn you. Tap **Advanced →
 Proceed to the site**. Once only.
 
+> **If the phone says the site is unreachable**, the cause is most likely
+> neither the network nor the certificate, but the macOS firewall. It remembers
+> a refusal per application, and a "no" given once to the "do you want node to
+> accept incoming connections?" dialog makes every Node server unreachable from
+> the network, with no message other than that one.
+>
+> Two commands from the Mac settle it:
+>
+> ```bash
+> curl -sk -o /dev/null -w "%{http_code}\n" https://localhost:5173/
+> curl -sk -o /dev/null -w "%{http_code}\n" https://<your-local-address>:5173/
+> ```
+>
+> If the first answers `200` and the second fails, it is the firewall: the
+> server is fine, only the network interface is filtered. `node` then appears in
+> `/usr/libexec/ApplicationFirewall/socketfilterfw --listapps` marked *Block
+> incoming connections*.
+>
+> **Without touching the firewall**, the USB cable sidesteps the question:
+>
+> ```bash
+> brew install --cask android-platform-tools
+> adb reverse tcp:5173 tcp:5173
+> ```
+>
+> The phone then reaches the server on its own `localhost`, at
+> `http://localhost:5173/tools/android-check.html`. No network, no firewall, and
+> no certificate warning — `localhost` is a secure context in its own right, so
+> the microphone works over plain HTTP.
+
 **4. Run the five steps** in order, allowing the microphone when asked. The last
 one has you read a sentence aloud — read it at speaking pace, no faster.
 
@@ -157,10 +261,84 @@ APK(s)*. You get a file to send by message or link. Your friends will have to
 allow installation from an unknown source — Android offers this when they open
 the file. Free, immediate, no account needed.
 
-**Through the Play Store.** Google developer account at **$25, paid once** (not
-to be confused with Apple's **$99 per year** for iOS, which is why iOS was set
-aside). One-click installation and automatic updates, but a review to pass.
-Worth it once the tool goes beyond a close circle.
+**Through the Play Store, as an internal test.** Google developer account at
+**$25, paid once** (not to be confused with Apple's **$99 per year** for iOS,
+which is why iOS was set aside). One-click installation, automatic updates, and
+— the point that matters — **nothing published to the public**: the internal
+testing track ships the app to a list of addresses you choose, a hundred at
+most. See the next section.
+
+## Publishing privately on the Play Store — internal testing
+
+This is the path meant for a team-only release. The app appears nowhere in the
+store: only the people you enrol can install it, through a link.
+
+### 1. The developer account — allow a few days
+
+Create it at [play.google.com/console](https://play.google.com/console): $25,
+once. Google verifies your identity (ID, address; a D-U-N-S number if you
+register as a company). **That verification is the long pole** — hours to days.
+Nothing else can move until it clears, so start it first.
+
+One useful nuance: recent personal accounts must gather twelve testers over
+fourteen days **before publishing publicly**. Internal testing is exempt. All
+the more reason to stay on that track while the tool stays inside the team.
+
+### 2. The signing key — never lose it
+
+In Android Studio: *Build → Generate Signed App Bundle / APK → Android App
+Bundle → Create new…*. You choose a `.jks` file and two passwords.
+
+**Back that file and those passwords up somewhere other than your machine.** An
+Android app is identified by its key: lose it and no update is possible ever
+again — you would have to republish under another name. Accept **Play App
+Signing** along the way, which keeps a copy of the key safe at Google.
+
+What comes out is an `.aab` — what the Play Store expects, where the APK stays
+reserved for hand-to-hand delivery.
+
+### 3. Create the app in the console
+
+*Create app*, filling in the name, the language, "App" and "Free". The package
+name is already fixed by the project — `fr.souffleur.app` — and **it is
+final**: it can never change after the first upload.
+
+### 4. The mandatory declarations
+
+The console publishes nothing until the *App content* section is complete. For
+Souffleur:
+
+- **Privacy policy** — a web address is required as soon as an app asks for the
+  microphone. A public page is enough; it should say what the project already
+  says: audio is analysed on the device and sent nowhere.
+- **Data safety** — declare that no data is collected or shared. That is
+  accurate with the Vosk engine, which works offline. It would stop being
+  accurate with a remote speech engine: this form would then need correcting.
+- **Content rating**, **target audience**, **ads** (none), **app access**
+  (nothing is restricted).
+
+### 5. Upload and invite
+
+*Testing → Internal testing → Create new release*, drop in the `.aab`, then
+under *Testers* create a list with your developers' Gmail addresses. Roll out
+the release.
+
+The console then shows a **join link**. Each person opens it, accepts being a
+tester, and the app installs from the Play Store like any other. Allow a few
+minutes of processing — not the days of review a public release takes.
+
+For the next version, raise `versionCode` in `android/app/build.gradle`
+(Google rejects two uploads carrying the same number), rebuild, re-upload: the
+update reaches the phones on its own.
+
+### Faster still: internal app sharing
+
+If all you want is to let someone try a work-in-progress build, the console
+offers *Internal app sharing*: you drop in an `.aab` or an `.apk` and get a
+link, nobody needs to be on a list, and there is no review at all. The link
+expires, it brings no automatic updates, and the tester must have enabled
+internal app sharing in their Play Store app. It is the APK-by-message
+equivalent, with one-click installation on top.
 
 ## iOS
 

@@ -12,15 +12,16 @@
     "build": "node scripts/build.js",
     "dev": "node scripts/serve.js",
     "dev:https": "node scripts/serve.js --https",
-    "dist": "node scripts/build-check.js && electron-builder",
-    "dist:mac": "node scripts/build-check.js && electron-builder --mac",
+    "dmg": "npm run preparer && electron-builder --mac dmg",
+    "linux": "npm run preparer && electron-builder --linux",
     "model": "node scripts/model.js",
     "postinstall": "node scripts/vendor.js",
+    "preparer": "node scripts/vendor.js && node scripts/build-check.js",
     "test": "node --test test/*.test.js",
-    "vendor": "node scripts/vendor.js"
+    "vendor": "node scripts/vendor.js",
+    "windows": "npm run preparer && electron-builder --win"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.124.0",
     "@capacitor/android": "^8.5.1",
     "@capacitor/core": "^8.5.1",
     "@fontsource/jetbrains-mono": "^5.3.0",
@@ -29,8 +30,7 @@
   "devDependencies": {
     "@capacitor/cli": "^8.5.1",
     "electron": "^44.3.0",
-    "electron-builder": "^26.15.3",
-    "esbuild": "^0.28.2"
+    "electron-builder": "^26.15.3"
   },
   "main": "electron/main.js",
   "overrides": {
@@ -41,36 +41,41 @@
     "productName": "Souffleur",
     "copyright": "Souffleur",
     "directories": {
-      "output": "release",
+      "output": "dist",
       "buildResources": "build"
     },
     "files": [
       "index.html",
       "src/**/*",
       "vendor/**/*",
-      "electron/**/*",
       "models/**/*",
+      "electron/**/*",
       "package.json",
+      "!node_modules/**/*",
       "!**/*.map"
     ],
+    "asar": false,
     "mac": {
+      "category": "public.app-category.productivity",
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "arm64"
           ]
         }
       ],
-      "category": "public.app-category.productivity",
       "icon": "build/icon.png",
       "darkModeSupport": true,
       "extendInfo": {
         "NSMicrophoneUsageDescription": "Souffleur écoute votre voix pour suivre votre position dans le texte. L'audio ne quitte jamais cet appareil."
-      }
+      },
+      "identity": "-",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": {
-      "title": "Souffleur",
+      "title": "Souffleur ${version}",
       "contents": [
         {
           "x": 140,
@@ -87,16 +92,34 @@
     },
     "win": {
       "target": [
-        "nsis"
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "build/icon.png"
     },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    },
     "linux": {
       "target": [
-        "AppImage"
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ],
       "icon": "build/icon.png",
-      "category": "Office"
+      "category": "Office",
+      "maintainer": "Souffleur",
+      "synopsis": "Téléprompteur qui suit la voix de l'orateur dans son texte"
     }
   }
 }

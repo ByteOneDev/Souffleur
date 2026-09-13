@@ -108,8 +108,11 @@ _italique_                nuance, aparté
 [[regarder le public]]    consigne de jeu, non prononcée
 ```
 
-Le texte se verrouille d'un clic (ou par `L`) : une fois en situation, une
-frappe accidentelle ne peut plus modifier le discours.
+L'écran a deux faces. En **lecture**, le texte est mis en page et rien ne peut
+l'atteindre : plus de champ de saisie sous les doigts, donc plus de frappe
+accidentelle en situation. En **édition** — un clic dans le texte, le bouton
+*éditer*, ou la touche `E` — le champ prend exactement la même colonne, la même
+police et la même taille : on écrit déjà ce qu'on lira.
 
 ## Charte graphique — « encre et ruban »
 
@@ -148,7 +151,6 @@ corrompu ou refusé n'empêche jamais d'ouvrir l'application.
 src/align/    normalisation FR, phonétique, similarité, moteur d'alignement
 src/script/   analyse des annotations et rendu du prompteur
 src/stt/      adaptateurs de moteurs vocaux + simulateur de lecture
-src/ai/       assistance rédactionnelle (tâches, clé, appel du modèle)
 src/store/    bibliothèque des discours (stockage injecté)
 src/ui/       charte, thèmes, polices, assemblage de l'interface
 test/         tests, banc de mesure et test de rupture
@@ -169,6 +171,7 @@ standard, exécutable directement par le navigateur et par Node.
 
 ```bash
 npm run app        # lance l'application de bureau
+npm run dmg        # fabrique dist/Souffleur-<version>-arm64.dmg (macOS)
 npm run android    # assemble et ouvre le projet dans Android Studio
 npm run dist:mac   # fabrique le .dmg (à lancer sur un Mac)
 ```
@@ -216,23 +219,26 @@ détail qui coûte trois jours si on le découvre en route. La contrainte connue
 le modèle français de ~50 Mo restera à valider dans le WebView d'Android, et
 c'est précisément pour ça que l'adaptateur existe.
 
-**L'IA se branchera en BYOK.** L'utilisateur fournit sa propre clé Claude,
-stockée localement : pas de backend à héberger, pas de coût de fonctionnement,
-pas de clé partagée dans un binaire distribué.
+**Aucune assistance rédactionnelle embarquée.** Écrire un discours se fait très
+bien avec l'outil d'écriture qu'on a déjà ; l'embarquer ici aurait ajouté une
+clé d'API à gérer, un secret à ne pas fuiter, une dépendance réseau et une
+réserve dans la politique de confidentialité — pour une fonction que rien
+n'oblige à vivre dans le prompteur. Souffleur suit la voix dans un texte, et
+rien d'autre.
 
 ## État et suite
 
 Fait : le moteur d'alignement et ses mesures, le prompteur avec annotations,
-chronométrage et verrouillage, la bibliothèque de discours, la charte graphique
-en deux thèmes, l'application de bureau et le projet Android.
+chronométrage, la bascule lecture / édition, la bibliothèque de discours, la
+charte graphique en deux thèmes, l'application de bureau — livrée en .dmg,
+installateur Windows et AppImage — et le projet Android.
 
 Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est le seul
-risque restant, et `tools/android-check.html` le tranche en cinq minutes (voir
-la [documentation d'installation](doc/francais/installation.md)).
+risque restant. Le banc `tools/android-check.html` le tranche en cinq minutes,
+mais la vérification est **en attente** : voir la section correspondante de la
+[documentation d'installation](doc/francais/installation.md), qui explique
+pourquoi et par où reprendre.
 
-Fait aussi : l'assistance rédactionnelle — réécriture pour l'oral, ajustement à
-une durée, fiches de secours, questions du public — avec la clé de chaque
-utilisateur, rangée sur son appareil.
 
 À venir : découpage par sections avec durée cible, analyse de répétition, import
 de documents, et télécommande depuis le téléphone.
