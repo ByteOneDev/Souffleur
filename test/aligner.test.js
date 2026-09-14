@@ -191,3 +191,89 @@ test('le texte a anaphores reste suivi malgre l ambiguite', () => {
   const within3 = quality(ANAPHORE, { errorRate: 0.2, dropRate: 0.15 }, { profile: 'lecture' });
   assert.ok(within3 > 0.9, `within3=${within3}`);
 });
+
+// --- Fautes de lecture -----------------------------------------------------
+// L'aligneur ne dit pas seulement ou en est l'orateur : il sait aussi quels
+// mots il a laisses derriere lui sans jamais les prononcer.
+
+test('lecture propre : aucun mot signale derriere le curseur', () => {
+  const aligner = new Aligner(tokens, { profile: 'lecture' });
+  let clock = 0;
+  for (const { spoken } of simulateReading(words, { seed: 1 })) aligner.push(spoken, (clock += 400));
+
+  const manques = tokens.filter((t) => aligner.isMissed(t.index));
+  assert.ok(manques.length <= 2, `${manques.length} faux positifs : ${manques.map((t) => t.norm)}`);
+});
+
+test('un paragraphe saute : les mots enjambes sont signales', () => {
+  const aligner = new Aligner(tokens);
+  let clock = 0;
+  for (const { spoken } of simulateReading(words, { seed: 5, skip: [40, 75] })) {
+    aligner.push(spoken, (clock += 400));
+  }
+
+  const saute = [];
+  for (let i = 40; i < 75; i++) if (aligner.isMissed(i)) saute.push(i);
+  assert.ok(saute.length > 25, `seulement ${saute.length} mots sur 35 signales`);
+
+  // Et le reste du texte, lui, a bien ete lu.
+  const ailleurs = tokens.filter((t) => (t.index < 40 || t.index >= 75) && aligner.isMissed(t.index));
+  assert.ok(ailleurs.length <= 4, `${ailleurs.length} faux positifs hors du saut`);
+});
+
+test('rien n est reproche avant d avoir ete depasse', () => {
+  const aligner = new Aligner(tokens);
+  let clock = 0;
+  for (const { spoken } of simulateReading(words.slice(0, 30), { seed: 3 })) {
+    aligner.push(spoken, (clock += 400));
+  }
+  assert.equal(aligner.isMissed(aligner.cursor), false, 'le mot courant n est pas juge');
+  for (let i = aligner.cursor; i < tokens.length; i++) {
+    assert.equal(aligner.isMissed(i), false, `le mot ${i} n a pas encore ete lu`);
+  }
+});
+
+test('reprendre a zero efface les fautes precedentes', () => {
+  const aligner = new Aligner(tokens);
+  let clock = 0;
+  for (const { spoken } of simulateReading(words, { seed: 5, skip: [40, 75] })) {
+    aligner.push(spoken, (clock += 400));
+  }
+  assert.ok(aligner.isMissed(50), 'le saut devrait etre signale avant la remise a zero');
+  aligner.reset();
+  assert.equal(aligner.isMissed(50), false);
+});
+
+test('changer de profil ne fait pas perdre sa place', () => {
+  const aligner = new Aligner(tokens, { profile: 'discours' });
+  let clock = 0;
+  for (const { spoken } of simulateReading(words.slice(0, 40), { seed: 5 })) {
+    aligner.push(spoken, (clock += 400));
+  }
+  const place = aligner.cursor;
+  const entendus = aligner.heard.size;
+  assert.ok(place > 30, `curseur=${place}`);
+
+  aligner.setProfile('lecture');
+  assert.equal(aligner.cursor, place, 'le curseur doit rester ou il est');
+  assert.equal(aligner.heard.size, entendus, 'ce qui a ete entendu le reste');
+  assert.equal(aligner.opts.bufferSize, PROFILES.lecture.bufferSize);
+  assert.ok(aligner.opts.minConfidence > 0, 'les defauts completent le nouveau profil');
+
+  // Et le suivi continue depuis la, sans repartir de zero.
+  for (const { spoken } of simulateReading(words.slice(40, 70), { seed: 5 })) {
+    aligner.push(spoken, (clock += 400));
+  }
+  assert.ok(aligner.cursor >= 65 && aligner.cursor <= 72, `suite a ${aligner.cursor}`);
+});
+
+test('le tampon est retaille quand le nouveau profil en demande moins', () => {
+  const aligner = new Aligner(tokens, { profile: 'lecture' });
+  let clock = 0;
+  for (const { spoken } of simulateReading(words.slice(0, 30), { seed: 1 })) {
+    aligner.push(spoken, (clock += 400));
+  }
+  assert.equal(aligner.buffer.length, PROFILES.lecture.bufferSize);
+  aligner.setProfile('discours');
+  assert.equal(aligner.buffer.length, PROFILES.discours.bufferSize);
+});

@@ -56,6 +56,7 @@ const state = {
   targetSeconds: 0,
   wordElements: [],
   lastPainted: -2,
+  lastRevision: -1,
   saveTimer: null,
 };
 
@@ -137,35 +138,77 @@ function prepare(source) {
   state.aligner = new Aligner(state.tokens, { profile: state.profile });
 
   $('#prompter').innerHTML = renderHtml(buildFragments(state.script, state.tokens));
+  /*
+   * Un mot dont le style ne couvre qu'une partie — « anti**constitutionnel** »
+   * — se rend en deux morceaux portant le meme index. Ne garder que le dernier
+   * laissait la premiere moitie du mot hors du suivi : jamais grisee, jamais
+   * soulignee, jamais eclairee. On tient donc tous les morceaux.
+   */
   state.wordElements = [];
   for (const element of $('#prompter').querySelectorAll('[data-i]')) {
-    state.wordElements[Number(element.dataset.i)] = element;
+    const index = Number(element.dataset.i);
+    (state.wordElements[index] ??= []).push(element);
   }
   state.lastPainted = -2;
+  state.lastRevision = -1;
   paint(-1);
   updateStats();
 }
 
+/**
+ * Etat du texte a l'ecran : ce qui est lu, ce qui est en cours, et ce qui a
+ * ete manque. Un mot depasse sans avoir jamais ete entendu — escamote, ou dit
+ * de travers — reste souligne de rouge derriere le lecteur : le prompteur ne
+ * s'arrete pas pour autant, il continue et laisse la trace.
+ */
 function paint(cursor) {
-  if (cursor === state.lastPainted) return;
+  const revision = state.aligner?.revision ?? 0;
+  if (cursor === state.lastPainted && revision === state.lastRevision) return;
   const previous = state.lastPainted;
+  const deplace = cursor !== state.lastPainted;
   state.lastPainted = cursor;
+  state.lastRevision = revision;
 
   // On ne repeint que la zone qui change, pas les milliers de mots du texte.
-  const from = Math.max(0, Math.min(previous, cursor) - 2);
+  // Elle s'etend en arriere jusqu'a la fenetre de recul de l'aligneur : c'est
+  // toute la portee ou un mot peut encore etre rendu a la lecture.
+  const recul = (state.aligner?.opts.backWindow ?? 20) + 2;
+  const from = Math.max(0, Math.min(previous, cursor) - recul);
   const to = Math.min(state.wordElements.length - 1, Math.max(previous, cursor) + 2);
   for (let i = from; i <= to; i++) {
-    const element = state.wordElements[i];
-    if (!element) continue;
-    element.classList.toggle('said', i < cursor);
-    element.classList.toggle('current', i === cursor);
+    const morceaux = state.wordElements[i];
+    if (!morceaux) continue;
+    const lu = i < cursor;
+    const manque = lu && !!state.aligner?.isMissed(i);
+    for (const element of morceaux) {
+      element.classList.toggle('said', lu);
+      element.classList.toggle('current', i === cursor);
+      element.classList.toggle('missed', manque);
+    }
   }
 
-  const current = state.wordElements[cursor];
-  if (current) {
+  const current = state.wordElements[cursor]?.[0];
+  if (deplace && current) {
     const view = $('#prompter-view');
     view.scrollTo({ top: current.offsetTop - view.clientHeight * 0.38, behavior: 'smooth' });
   }
+}
+
+/**
+ * Rattrapage manuel, borne au texte.
+ *
+ * Sans borne, une touche maintenue emmenait le curseur avant le premier mot ou
+ * au-dela du dernier : la barre de progression passait sous zero ou franchissait
+ * les cent pour cent, et il fallait autant d'appuis en sens inverse pour revenir.
+ * Les indicateurs suivent le geste, sinon ils resteraient sur la position que la
+ * voix avait quittee.
+ */
+function deplacerCurseur(pas) {
+  const aligneur = state.aligner;
+  if (!aligneur) return;
+  aligneur.cursor = Math.max(-1, Math.min(aligneur.tokens.length - 1, aligneur.cursor + pas));
+  paint(aligneur.position);
+  updateStats();
 }
 
 // --- Indicateurs ------------------------------------------------------------
@@ -302,7 +345,9 @@ function setEditing(editing) {
 
   if (editing) {
     ajusterChamp();
-    $('#source').focus();
+    // Prendre le focus deplacerait le texte pour montrer le caret, juste avant
+    // qu'on le remette a sa place : deux sauts au lieu d'aucun.
+    $('#source').focus({ preventScroll: true });
   } else if (sortieDEdition) {
     prepare($('#source').value);
   }
@@ -311,11 +356,23 @@ function setEditing(editing) {
   view.scrollTo({ top: Math.round(cible), behavior: 'instant' });
 }
 
-/** Le champ grandit avec le texte : c'est la page qui defile, pas un cadre. */
+/**
+ * Le champ grandit avec le texte : c'est la page qui defile, pas un cadre.
+ *
+ * Mesurer sa hauteur naturelle oblige a le laisser se retracter un instant.
+ * Le texte devient alors plus court que la place qu'il occupait, le navigateur
+ * ramene le defilement dans les clous — et il n'en ressort pas tout seul quand
+ * la hauteur revient. C'etait le sursaut de chaque frappe : le texte remontait,
+ * puis le caret qu'on ramene a l'ecran le faisait redescendre. On rend donc sa
+ * place au lecteur avant de laisser la main.
+ */
 function ajusterChamp() {
   const champ = $('#source');
+  const view = $('#prompter-view');
+  const place = view.scrollTop;
   champ.style.height = 'auto';
   champ.style.height = `${champ.scrollHeight}px`;
+  if (view.scrollTop !== place) view.scrollTo({ top: place, behavior: 'instant' });
 }
 
 // --- Depliants --------------------------------------------------------------
@@ -412,7 +469,13 @@ function bind() {
     input.addEventListener('change', (event) => {
       state.profile = event.target.value;
       updateProfileHint();
-      prepare($('#source').value);
+      /*
+       * Le texte n'a pas bouge : seuls les reglages de suivi changent. Le
+       * reconstruire remettait le curseur au premier mot — un reglage qu'on
+       * touche volontiers en plein discours, justement parce que le suivi
+       * decroche, et qui faisait alors perdre sa place a l'orateur.
+       */
+      state.aligner.setProfile(state.profile);
       scheduleSave();
     });
   }
@@ -471,8 +534,8 @@ function bind() {
     if (event.key === 'e') setEditing(!state.editing);
     if (event.key === 'f') document.documentElement.requestFullscreen?.();
     // Rattrapage manuel : l'orateur reprend la main si le suivi decroche.
-    if (event.key === 'ArrowDown') { state.aligner.cursor += 1; paint(state.aligner.position); }
-    if (event.key === 'ArrowUp') { state.aligner.cursor -= 1; paint(state.aligner.position); }
+    if (event.key === 'ArrowDown') deplacerCurseur(1);
+    if (event.key === 'ArrowUp') deplacerCurseur(-1);
   });
 
   setupEngines();
