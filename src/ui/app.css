@@ -84,6 +84,23 @@ body {
 .controls { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex: none; }
 .controls .action { width: auto; margin: 0; padding: var(--space-2) var(--space-4); }
 
+/*
+ * Poignee de la fenetre de bureau.
+ *
+ * L'application n'a pas de barre de titre : elle serait une bande grise au
+ * dessus d'un ecran qui appartient au texte. Mais une fenetre sans barre de
+ * titre est une fenetre qu'on ne peut plus deplacer — le contenu web recoit la
+ * souris a sa place. C'est donc cette barre-ci qui devient la poignee.
+ *
+ * Tout ce qu'elle porte d'interactif doit en etre exclu, sans quoi un clic sur
+ * « Demarrer » deviendrait un deplacement de fenetre. Dans un navigateur
+ * ordinaire, ces deux proprietes ne font rien.
+ */
+.bar { -webkit-app-region: drag; app-region: drag; }
+.bar button, .bar input, .bar select, .bar .menu, .bar .picker {
+  -webkit-app-region: no-drag; app-region: no-drag;
+}
+
 /* --- Choix du texte ------------------------------------------------------- */
 
 .picker { position: relative; }
@@ -283,7 +300,13 @@ button.icon:disabled:hover { border-color: var(--rule); color: var(--ink-soft); 
   min-height: 0;
   overflow-y: auto;
   padding: 0 var(--space-6);
-  scroll-behavior: smooth;
+  /*
+   * Pas de « scroll-behavior: smooth » ici : il animerait aussi les
+   * deplacements que personne n'a demandes — le caret qu'on ramene a l'ecran
+   * en tapant, le champ qu'on remesure — et chacun se voyait glisser. Le seul
+   * defilement qui doit etre doux est celui qui suit la voix, et celui-la le
+   * demande explicitement.
+   */
   /*
    * Repere de mesure. Le defilement vise « offsetTop du mot courant moins un
    * tiers de hauteur d'ecran » : sans cette ligne, offsetTop se compte depuis
@@ -359,6 +382,19 @@ body:not(.running) #prompter { cursor: text; }
 .w { transition: color var(--motion-fast) linear; }
 .w.said { color: var(--read-done); }
 .w.current { color: var(--lamp); background: var(--lamp-soft); border-radius: var(--radius-sm); }
+/*
+ * Le mot qu'on a dit de travers, ou pas dit du tout. On le souligne et on
+ * passe : un prompteur qui s'arreterait sur la faute ferait trebucher deux
+ * fois. Le trait est sous la ligne, jamais dessus — le texte a venir doit
+ * rester le seul a se lire de loin.
+ */
+.w.missed {
+  text-decoration: underline;
+  text-decoration-color: var(--ribbon);
+  text-decoration-thickness: .05em;
+  text-underline-offset: .16em;
+  text-decoration-skip-ink: none;
+}
 .bold { font-weight: 700; }
 .italic { font-style: italic; }
 .mark { background: var(--cool-soft); border-radius: var(--radius-sm); padding: 0 .08em; }

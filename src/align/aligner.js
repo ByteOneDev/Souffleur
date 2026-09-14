@@ -102,9 +102,15 @@ function localAlign(windowTokens, spoken, opts, anchor) {
   let winner = null;
   for (const candidate of candidates.slice(0, 8)) {
     let { i, j } = candidate;
-    let matched = 0;
+    // Le chemin retenu dit mot par mot ce qui a ete reellement entendu : on
+    // garde ces index, car ce sont eux qui distinguent plus tard un mot lu
+    // d'un mot enjambe.
+    const hits = [];
     while (i > 0 && j > 0 && P[i][j] !== 0) {
-      if (P[i][j] === 1) { if (wordScore(windowTokens[i - 1], spoken[j - 1]) > 0) matched++; i--; j--; }
+      if (P[i][j] === 1) {
+        if (wordScore(windowTokens[i - 1], spoken[j - 1]) > 0) hits.push(windowTokens[i - 1].index);
+        i--; j--;
+      }
       else if (P[i][j] === 2) i--;
       else j--;
     }
@@ -115,7 +121,8 @@ function localAlign(windowTokens, spoken, opts, anchor) {
       winner = {
         adjusted,
         score: candidate.score,
-        matched,
+        matched: hits.length,
+        hits,
         startIndex,
         endIndex: windowTokens[candidate.i - 1].index,
       };
@@ -144,6 +151,23 @@ export class Aligner {
     this.lostStreak = 0;
     this.buffer = [];
     this.history = [];
+    /** Index des mots du texte reellement entendus depuis le debut. */
+    this.heard = new Set();
+    /** Compteur de revision : change des que le verdict d'un mot bouge. */
+    this.revision = 0;
+  }
+
+  /**
+   * Change de profil en cours de route, sans perdre la position ni ce qui a
+   * deja ete entendu : on ne change que la maniere de suivre, pas l'endroit ou
+   * l'on en est.
+   */
+  setProfile(name, overrides = {}) {
+    this.profile = name;
+    this.opts = profileOptions(name, overrides);
+    if (this.buffer.length > this.opts.bufferSize) {
+      this.buffer = this.buffer.slice(-this.opts.bufferSize);
+    }
   }
 
   /** Position de lecture actuelle, bornee au texte. */
@@ -207,6 +231,10 @@ export class Aligner {
       this.cursor = result.endIndex;
       this.confidence = result.confidence;
       this.lostStreak = 0;
+      // Le verdict d'un mot n'est jamais definitif tant qu'il est dans la
+      // fenetre : une hypothese partielle corrigee peut le rendre a la lecture.
+      for (const index of result.hits) this.heard.add(index);
+      this.revision++;
       this.history.push({ index: this.cursor, timestamp });
       if (this.history.length > 200) this.history.shift();
     } else {
@@ -227,6 +255,15 @@ export class Aligner {
     // Un seul mot apparie sur tout le tampon, c'est une coincidence, pas une lecture.
     if (best.matched < 2 && this.buffer.length >= 3) return null;
     return { ...best, confidence };
+  }
+
+  /**
+   * Un mot deja depasse que le moteur n'a jamais entendu : escamote par le
+   * lecteur, ou dit de travers. Le mot courant et la suite ne sont pas juges —
+   * on ne reproche pas a l'orateur ce qu'il n'a pas encore lu.
+   */
+  isMissed(index) {
+    return index >= 0 && index < this.cursor && !this.heard.has(index);
   }
 
   state() {

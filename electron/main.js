@@ -53,6 +53,35 @@ function servirFichier(request) {
   return net.fetch(pathToFileURL(cible).toString());
 }
 
+/**
+ * Les trois pastilles de macOS, et la place que la page leur reserve.
+ *
+ * La barre de titre est masquee — elle serait une bande grise au-dessus d'un
+ * ecran qui appartient au texte — mais les pastilles restent, posees par-dessus
+ * le contenu au coin superieur gauche. Sans reserve, elles se superposent au
+ * ruban et au premier indicateur.
+ *
+ * Les deux valeurs sortent des memes nombres au lieu d'etre ajustees a l'oeil
+ * chacune de son cote : on dit ou poser les pastilles, et la reserve s'en
+ * deduit. Elles ne peuvent donc plus diverger.
+ */
+const PASTILLE = 12;          // diametre d'une pastille
+const ECART = 8;              // intervalle entre deux pastilles
+const MARGE = 18;             // depuis le bord gauche de la fenetre
+const LARGEUR_PASTILLES = 3 * PASTILLE + 2 * ECART;
+// Hauteur de la barre du haut, mesuree dans la page. Elle ne sert qu'a centrer
+// les pastilles : quelques pixels d'ecart ne se voient pas.
+const HAUTEUR_BARRE = 63;
+const POSITION_PASTILLES = { x: MARGE, y: Math.round((HAUTEUR_BARRE - PASTILLE) / 2) };
+
+/*
+ * La reserve est injectee ici plutot qu'ecrite dans la feuille de style :
+ * servie dans un navigateur, la meme page n'a pas de pastilles et n'aurait
+ * qu'un trou inexplique a gauche. La poignee de deplacement, elle, vit dans
+ * app.css — elle est sans effet hors d'une fenetre de bureau.
+ */
+const RESERVE_PASTILLES = `.bar { padding-left: ${MARGE + LARGEUR_PASTILLES + MARGE}px; }`;
+
 function createWindow() {
   const window = new BrowserWindow({
     width: 1280,
@@ -65,6 +94,7 @@ function createWindow() {
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#121316' : '#f3efe6',
     // Le titre se fond dans l'interface plutot que d'ajouter une barre grise.
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    ...(process.platform === 'darwin' ? { trafficLightPosition: POSITION_PASTILLES } : {}),
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -75,6 +105,13 @@ function createWindow() {
   });
 
   window.loadURL(PAGE);
+
+  // A chaque chargement, y compris apres un rechargement de la page.
+  if (process.platform === 'darwin') {
+    window.webContents.on('did-finish-load', () => {
+      window.webContents.insertCSS(RESERVE_PASTILLES);
+    });
+  }
 
   // Un lien externe s'ouvre dans le navigateur, jamais dans l'application.
   window.webContents.setWindowOpenHandler(({ url }) => {
