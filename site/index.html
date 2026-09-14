@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Souffleur : un téléprompteur qui suit la voix de l'orateur dans son propre texte. Suivi vocal hors ligne, chronométrage, annotations de scène.">
+
+<!--
+  Adresse publique du site, publié par .github/workflows/pages.yml.
+  Elle est écrite en toutes lettres : une balise canonique relative ne dit rien
+  à qui republie la page ailleurs.
+-->
+<link rel="canonical" href="https://byteonedev.github.io/Souffleur/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Souffleur">
+<meta property="og:url" content="https://byteonedev.github.io/Souffleur/">
+<meta property="og:title" content="Souffleur — il vous suit, vous ne suivez plus le prompteur">
+<meta property="og:description" content="Un téléprompteur qui écoute votre voix dans votre propre texte : il éclaire le mot en cours, fait défiler tout seul, et vous dit si vous êtes en avance ou en retard. Reconnaissance hors ligne.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Souffleur — il vous suit, vous ne suivez plus le prompteur">
+<meta name="twitter:description" content="Un téléprompteur qui écoute votre voix dans votre propre texte. Reconnaissance hors ligne.">
+
+<!-- La barre du navigateur suit les deux modes de la charte : papier, encre. -->
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='14'>&#127908;</text></svg>">
+<title>Souffleur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<style>
+/*
+ * « Encre et ruban » — la charte de l'application, portée à la page.
+ * Aucune couleur hors de ce bloc de jetons.
+ */
+:root {
+  --paper:        #f3efe6;
+  --surface:      #faf7f0;
+  --surface-sunk: #ebe5d8;
+  --rule:         #d9d1c0;
+  --rule-strong:  #b9ae97;
+  --ink:          #221f1a;
+  --ink-soft:     #55503f;
+  --ink-faint:    #8b8471;
+  --ribbon:       #b4362c;
+  --ribbon-soft:  #f0dcd8;
+  --lamp:         #9a6a12;
+  --lamp-soft:    #f3e2bd;
+  --signal:       #2f6f4f;
+  --cool:         #2c5d94;
+  --cool-soft:    #dce7f2;
+  --read-done:    #b3ab97;
+  --on-accent:    #fbf8f2;
+  color-scheme: light;
+
+  --font-ui: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --font-read: 'Newsreader', 'Iowan Old Style', Palatino, Georgia, serif;
+
+  --tracking-label: .14em;
+  --radius-sm: 2px;
+  --radius: 3px;
+  --border: 1px solid var(--rule);
+  --border-strong: 1px solid var(--rule-strong);
+  --ease: cubic-bezier(.2, .6, .3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper:        #121316;
+    --surface:      #181a1e;
+    --surface-sunk: #0d0e11;
+    --rule:         #282b31;
+    --rule-strong:  #3b3f47;
+    --ink:          #e9e4d9;
+    --ink-soft:     #a09a8c;
+    --ink-faint:    #6d685e;
+    --ribbon:       #e0554a;
+    --ribbon-soft:  #3a1f1d;
+    --lamp:         #e2ac4e;
+    --lamp-soft:    #38301c;
+    --signal:       #5fbf8e;
+    --cool:         #6ea8e0;
+    --cool-soft:    #1d2833;
+    --read-done:    #4e4a43;
+    --on-accent:    #14100f;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --paper:        #121316;
+  --surface:      #181a1e;
+  --surface-sunk: #0d0e11;
+  --rule:         #282b31;
+  --rule-strong:  #3b3f47;
+  --ink:          #e9e4d9;
+  --ink-soft:     #a09a8c;
+  --ink-faint:    #6d685e;
+  --ribbon:       #e0554a;
+  --ribbon-soft:  #3a1f1d;
+  --lamp:         #e2ac4e;
+  --lamp-soft:    #38301c;
+  --signal:       #5fbf8e;
+  --cool:         #6ea8e0;
+  --cool-soft:    #1d2833;
+  --read-done:    #4e4a43;
+  --on-accent:    #14100f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 15px/1.55 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+.page { max-width: 1000px; margin: 0 auto; padding: 0 24px 96px; }
+
+/* Angles francs, filets plutôt qu'ombres : une machine mécanique. */
+.eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+  margin: 0 0 12px;
+}
+
+h1, h2, h3 { font-family: var(--font-read); font-weight: 500; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(38px, 6vw, 62px); line-height: 1.06; letter-spacing: -.015em; }
+h2 { font-size: clamp(26px, 3.4vw, 34px); line-height: 1.18; }
+h3 { font-size: 19px; line-height: 1.3; font-weight: 600; }
+
+p { margin: 0; }
+.prose { font-family: var(--font-read); font-size: 18px; line-height: 1.62; max-width: 62ch; color: var(--ink-soft); }
+.prose strong { color: var(--ink); font-weight: 600; }
+.lede { font-size: 21px; color: var(--ink-soft); }
+
+/* --- Le ruban bicolore : seul ornement de la maison ---------------------- */
+
+.ribbon-mark {
+  width: 8px; height: 20px; flex: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(var(--ribbon) 0 50%, var(--ink) 50% 100%);
+}
+.ribbon-rule {
+  height: 3px; border: 0; margin: 0;
+  background: linear-gradient(var(--ribbon) 0 50%, var(--ink) 50% 100%);
+}
+
+/* --- Tête ---------------------------------------------------------------- */
+
+.masthead {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 0;
+  border-bottom: var(--border);
+}
+.wordmark {
+  font-size: 15px; font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+.tag {
+  margin-left: auto;
+  font-size: 11px; letter-spacing: var(--tracking-label); text-transform: uppercase;
+  color: var(--ink-faint);
+  border: var(--border); border-radius: var(--radius);
+  padding: 4px 9px;
+}
+
+/* --- Héros --------------------------------------------------------------- */
+
+.hero { padding: 72px 0 56px; }
+.hero h1 { max-width: 15ch; }
+.hero .lede { margin-top: 24px; max-width: 56ch; font-family: var(--font-read); }
+
+/* --- Le prompteur qui se lit lui-même ------------------------------------ */
+
+.stage {
+  margin-top: 48px;
+  border: var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.hud {
+  display: flex; gap: 28px; align-items: center;
+  padding: 10px 18px;
+  border-bottom: var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.hud::-webkit-scrollbar { display: none; }
+.stat { display: flex; flex-direction: column; flex: none; }
+.stat .label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: var(--tracking-label); color: var(--ink-faint);
+}
+.stat .value { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .value.early { color: var(--cool); }
+
+.tracking { display: flex; align-items: center; gap: 8px; flex: none; margin-left: auto; }
+.tracking .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); }
+.tracking .label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: var(--tracking-label); color: var(--ink-faint);
+}
+
+.track { height: 2px; background: var(--rule); }
+.track > i { display: block; height: 100%; width: 38%; background: var(--ribbon); transition: width 340ms linear; }
+
+.script {
+  font-family: var(--font-read);
+  font-size: clamp(21px, 2.9vw, 30px);
+  line-height: 1.62;
+  padding: 40px 32px 44px;
+  color: var(--ink);
+}
+
+/* Les trois états du texte, repris tels quels de l'application. */
+.w { transition: color 90ms linear; }
+.w.said { color: var(--read-done); }
+.w.current { color: var(--lamp); background: var(--lamp-soft); border-radius: var(--radius-sm); }
+.w.missed {
+  text-decoration: underline;
+  text-decoration-color: var(--ribbon);
+  text-decoration-thickness: .05em;
+  text-underline-offset: .16em;
+  text-decoration-skip-ink: none;
+}
+.mark { background: var(--cool-soft); border-radius: var(--radius-sm); padding: 0 .08em; }
+.w.said.mark { background: none; }
+.bold { font-weight: 600; }
+
+.insert {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: .4em; font-weight: 500;
+  letter-spacing: var(--tracking-label); text-transform: uppercase;
+  padding: .3em .7em; border-radius: var(--radius-sm);
+  margin: 0 .35em; vertical-align: middle;
+}
+.insert-pause { background: var(--cool-soft); color: var(--cool); }
+.insert-note { background: var(--ribbon-soft); color: var(--ribbon); }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 28px;
+  padding: 14px 18px;
+  border-top: var(--border);
+  background: var(--surface-sunk);
+  font-size: 11px; letter-spacing: .04em;
+  color: var(--ink-faint);
+}
+.legend span { display: flex; align-items: center; gap: 8px; }
+.legend i {
+  width: 18px; height: 3px; flex: none; border-radius: var(--radius-sm);
+  background: var(--read-done);
+}
+.legend .k-current i { background: var(--lamp); }
+.legend .k-missed i { background: var(--ribbon); }
+
+/* --- Sections ------------------------------------------------------------ */
+
+section { padding-top: 72px; }
+.section-head { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; }
+.section-head .prose { margin-top: 4px; }
+
+/* --- Tableau de mesures --------------------------------------------------- */
+
+.scroller { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px; }
+caption {
+  caption-side: bottom; text-align: left; padding-top: 14px;
+  font-size: 12px; color: var(--ink-faint); line-height: 1.5;
+}
+th, td { padding: 9px 12px; text-align: right; border-bottom: var(--border); }
+th:first-child, td:first-child { text-align: left; padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+thead th {
+  font-size: 10px; font-weight: 500; text-transform: uppercase;
+  letter-spacing: var(--tracking-label); color: var(--ink-faint);
+  border-bottom: var(--border-strong);
+}
+tbody td { font-variant-numeric: tabular-nums; }
+tbody tr.keyrow td { background: var(--ribbon-soft); font-weight: 500; }
+tbody tr.keyrow td:first-child { color: var(--ribbon); }
+
+/* --- Deux profils --------------------------------------------------------- */
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0; border-top: var(--border-strong); }
+.profile { padding: 26px 0 26px 26px; border-bottom: var(--border); border-left: var(--border); }
+.profile:first-child { padding-left: 0; border-left: 0; }
+.profile h3 { margin-bottom: 6px; }
+.profile .role { font-size: 11px; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--ribbon); margin-bottom: 14px; }
+.profile p { font-family: var(--font-read); font-size: 16px; line-height: 1.6; color: var(--ink-soft); max-width: 40ch; }
+.dials { display: flex; gap: 24px; margin-top: 20px; }
+.dial { display: flex; flex-direction: column; }
+.dial .n { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.dial .l { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-label); color: var(--ink-faint); }
+
+/* --- Grammaire du script -------------------------------------------------- */
+
+.grammar { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; align-items: start; }
+.syntax-list { display: flex; flex-direction: column; gap: 0; margin: 0; }
+.syntax-row {
+  display: flex; gap: 16px; align-items: baseline;
+  padding: 11px 0; border-bottom: var(--border);
+}
+.syntax-row code {
+  font-family: var(--font-ui); font-size: 13px;
+  color: var(--ribbon); flex: none; min-width: 15ch;
+}
+.syntax-row span { font-family: var(--font-read); font-size: 15px; color: var(--ink-soft); }
+
+.rendered {
+  border: var(--border); border-radius: var(--radius);
+  background: var(--surface); padding: 26px 24px;
+  font-family: var(--font-read); font-size: 19px; line-height: 1.62;
+}
+.rendered .section-title {
+  display: block;
+  font-family: var(--font-ui); font-size: 10px;
+  text-transform: uppercase; letter-spacing: var(--tracking-label);
+  color: var(--ink-faint);
+  border-bottom: var(--border); padding-bottom: 8px; margin-bottom: 16px;
+}
+
+/* --- Confidentialité ------------------------------------------------------ */
+
+.claims { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; }
+.claim { border-top: var(--border-strong); padding-top: 16px; }
+.claim h3 { font-size: 17px; margin-bottom: 8px; }
+.claim p { font-family: var(--font-read); font-size: 15.5px; line-height: 1.58; color: var(--ink-soft); }
+
+/* --- Plateformes ---------------------------------------------------------- */
+
+.platforms { width: 100%; border-collapse: collapse; font-size: 13px; }
+.platforms td { text-align: left; padding: 13px 12px 13px 0; border-bottom: var(--border); vertical-align: baseline; }
+.platforms td:first-child { font-weight: 500; width: 34%; }
+.platforms td:last-child { padding-right: 0; color: var(--ink-soft); }
+.state {
+  font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-label);
+  padding: 3px 8px; border-radius: var(--radius-sm); white-space: nowrap;
+}
+.state.ready { background: var(--ribbon-soft); color: var(--ribbon); }
+.state.pending { background: var(--surface-sunk); color: var(--ink-faint); border: var(--border); }
+
+/* --- Pied / construire ----------------------------------------------------- */
+
+.build {
+  margin-top: 32px;
+  border: var(--border-strong); border-radius: var(--radius);
+  background: var(--surface-sunk);
+  padding: 26px 24px;
+}
+pre {
+  margin: 0; overflow-x: auto;
+  font-family: var(--font-ui); font-size: 13px; line-height: 1.85;
+  color: var(--ink);
+}
+pre .c { color: var(--ink-faint); }
+pre .p { color: var(--ribbon); }
+
+footer {
+  margin-top: 72px; padding-top: 20px;
+  border-top: var(--border);
+  display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center;
+  font-size: 11px; letter-spacing: .04em; color: var(--ink-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; transition-duration: 1ms !important; }
+}
+
+@media (max-width: 640px) {
+  .script { padding: 28px 20px 32px; }
+  .profile { padding-left: 0; border-left: 0; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <span class="ribbon-mark" aria-hidden="true"></span>
+    <span class="wordmark">Souffleur</span>
+    <span class="tag">version 0.1.0</span>
+  </header>
+
+  <div class="hero">
+    <p class="eyebrow">Téléprompteur à suivi vocal</p>
+    <h1>Il vous suit. Vous ne suivez plus le prompteur.</h1>
+    <p class="lede">
+      Au théâtre, le souffleur suit le texte pendant que les comédiens jouent, et
+      donne la réplique à celui qui perd le fil. C'est exactement ce que fait ce
+      logiciel : il écoute votre voix dans votre propre texte, éclaire le mot en
+      cours, fait défiler tout seul, et vous dit en continu si vous êtes en avance
+      ou en retard.
+    </p>
+
+    <div class="stage">
+      <div class="hud">
+        <div class="stat"><span class="label">Écoulé</span><span class="value" id="t-elapsed">00:11</span></div>
+        <div class="stat"><span class="label">Restant</span><span class="value" id="t-left">04:22</span></div>
+        <div class="stat"><span class="label">Avance / retard</span><span class="value early">−00:06</span></div>
+        <div class="stat"><span class="label">Débit</span><span class="value" id="t-wpm">142</span></div>
+        <div class="stat"><span class="label">Progression</span><span class="value" id="t-progress">38 %</span></div>
+        <div class="tracking"><span class="dot"></span><span class="label">Suivi</span></div>
+      </div>
+      <div class="track"><i id="t-bar"></i></div>
+
+      <p class="script" id="script">
+        <span class="w said" data-i="0">Mesdames</span><span class="w said">,</span>
+        <span class="w said" data-i="1">messieurs</span><span class="w said">,</span>
+        <span class="w said" data-i="2">bonsoir</span><span class="w said">.</span>
+        <span class="insert insert-pause">pause 2s</span>
+        <span class="insert insert-note">balayer la salle</span>
+        <span class="w said" data-i="3">Je</span>
+        <span class="w said" data-i="4">voudrais</span>
+        <span class="w said" data-i="5">commencer</span>
+        <span class="w said" data-i="6">par</span>
+        <span class="w said" data-i="7">une</span>
+        <span class="w said bold" data-i="8">évidence</span>
+        <span class="w said" data-i="9">que</span>
+        <span class="w said" data-i="10">nous</span>
+        <span class="w said" data-i="11">avons</span>
+        <span class="w current" data-i="12">collectivement</span>
+        <span class="w" data-i="13">oubliée</span><span class="w"> :</span>
+        <span class="w" data-i="14">la</span>
+        <span class="w" data-i="15">technique</span>
+        <span class="w" data-i="16">n'est</span>
+        <span class="w mark" data-i="17">jamais</span>
+        <span class="w mark" data-i="18">neutre</span><span class="w">.</span>
+        <span class="w" data-i="19">Chaque</span>
+        <span class="w" data-i="20">outil</span>
+        <span class="w" data-i="21">que</span>
+        <span class="w" data-i="22">nous</span>
+        <span class="w" data-i="23">construisons</span>
+        <span class="w" data-i="24">porte</span>
+        <span class="w" data-i="25">en</span>
+        <span class="w" data-i="26">lui</span>
+        <span class="w" data-i="27">une</span>
+        <span class="w" data-i="28">certaine</span>
+        <span class="w" data-i="29">idée</span>
+        <span class="w" data-i="30">de</span>
+        <span class="w" data-i="31">l'homme</span><span class="w">.</span>
+      </p>
+
+      <div class="legend">
+        <span><i></i>Déjà dit</span>
+        <span class="k-current"><i></i>Mot en cours</span>
+        <span class="k-missed"><i></i>Manqué ou dit de travers</span>
+      </div>
+    </div>
+  </div>
+
+  <hr class="ribbon-rule">
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Le pari technique</p>
+      <h2>Un moteur vocal médiocre suffit.</h2>
+      <p class="prose">
+        Le suivi n'est pas un problème de dictée. Le texte est connu d'avance, donc
+        la question n'est pas « qu'a dit l'orateur ? » mais « où en est-il ? ». On
+        compare les derniers mots entendus à une fenêtre glissante du texte, par
+        alignement local sur une similarité qui combine forme écrite et forme
+        phonétique. <strong>Conséquence directe : la reconnaissance peut se tromper
+        beaucoup sans que la position bouge.</strong>
+      </p>
+    </div>
+
+    <div class="scroller">
+      <table>
+        <caption>
+          Discours de 147 mots, 10 tirages par scénario. La dérive est l'écart, en
+          mots, entre la position affichée et la position réelle du lecteur.
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Scénario</th>
+            <th scope="col">Dérive médiane</th>
+            <th scope="col">p90</th>
+            <th scope="col">≤ 3 mots</th>
+            <th scope="col">Va au bout</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Lecture parfaite</td><td>0</td><td>0</td><td>100,0 %</td><td>100 %</td></tr>
+          <tr><td>25 % de mots mal reconnus</td><td>0</td><td>0</td><td>100,0 %</td><td>100 %</td></tr>
+          <tr><td>40 % de mots mal reconnus</td><td>0</td><td>0</td><td>100,0 %</td><td>100 %</td></tr>
+          <tr><td>35 % de mots perdus par le micro</td><td>0</td><td>0</td><td>99,8 %</td><td>90 %</td></tr>
+          <tr><td>Hésitations, mots parasites</td><td>0</td><td>1</td><td>100,0 %</td><td>100 %</td></tr>
+          <tr class="keyrow"><td>Salle calme, micro proche</td><td>0</td><td>0</td><td>99,9 %</td><td>100 %</td></tr>
+          <tr><td>Conditions dégradées cumulées</td><td>0</td><td>1</td><td>99,4 %</td><td>100 %</td></tr>
+          <tr><td>Aparté improvisé de 12 mots</td><td>0</td><td>0</td><td>100,0 %</td><td>100 %</td></tr>
+          <tr><td>Saut d'un paragraphe entier</td><td>0</td><td>0</td><td>93,0 %</td><td>100 %</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="prose" style="margin-top:28px">
+      Coût de calcul : environ <strong>130 µs par mot</strong> sur un texte de
+      2 000 mots, soit trois mille fois moins que le temps réel. Le suivi n'est pas
+      un problème de performance.
+    </p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Deux profils, mesurés</p>
+      <h2>Lire un texte et parler à partir de notes ne demandent pas les mêmes réglages.</h2>
+      <p class="prose">
+        L'arbitrage tient à la taille du tampon de mots entendus. Un tampon long
+        apporte du contexte et désambiguïse les textes répétitifs — les anaphores,
+        les refrains — mais réagit plus lentement quand l'orateur saute ailleurs.
+        Un tampon court fait l'inverse. Ce ne sont pas des étiquettes : les valeurs
+        sortent d'un balayage de paramètres.
+      </p>
+    </div>
+
+    <div class="pair">
+      <div class="profile">
+        <p class="role">Au mot près</p>
+        <h3>Lecture</h3>
+        <p>
+          Le texte est suivi mot à mot, peu de tolérance aux écarts. C'est le mode
+          des textes tenus : discours écrit, lecture publique, voix off.
+        </p>
+        <div class="dials">
+          <div class="dial"><span class="n">12</span><span class="l">Tampon</span></div>
+          <div class="dial"><span class="n">22</span><span class="l">Recul</span></div>
+          <div class="dial"><span class="n">26</span><span class="l">Avance</span></div>
+        </div>
+      </div>
+      <div class="profile">
+        <p class="role">Tolérant à l'improvisation</p>
+        <h3>Discours</h3>
+        <p>
+          L'orateur brode, saute, reformule, revient. L'improvisation y est la
+          norme et non l'anomalie, et sauter des mots du texte est attendu.
+        </p>
+        <div class="dials">
+          <div class="dial"><span class="n">8</span><span class="l">Tampon</span></div>
+          <div class="dial"><span class="n">20</span><span class="l">Recul</span></div>
+          <div class="dial"><span class="n">40</span><span class="l">Avance</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="prose" style="margin-top:28px">
+      Le point faible d'origine était un texte à anaphores — « Je vous le dis… »
+      répété trois fois — où l'aligneur se fixait sur la mauvaise occurrence, et y
+      tombait <em>même avec une entrée parfaite</em>. Le vrai levier n'était pas de
+      pénaliser les sauts lointains, mais d'élargir la fenêtre de recul : de 12 à
+      20 mots, elle fait passer ce texte de <strong>85,9 % à 98,8 %</strong>.
+    </p>
+  </section>
+
+  <hr class="ribbon-rule">
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">La grammaire du script</p>
+      <h2>Six signes, et le texte est prêt à être joué.</h2>
+      <p class="prose">
+        Les annotations ne sont jamais prononcées : elles règlent le jeu, la
+        respiration et la structure. L'écran a deux faces — en lecture, le texte
+        est mis en page et rien ne peut l'atteindre, donc plus de frappe
+        accidentelle en situation.
+      </p>
+    </div>
+
+    <div class="grammar">
+      <div class="syntax-list">
+        <div class="syntax-row"><code># section</code><span>Repère de structure, non prononcé</span></div>
+        <div class="syntax-row"><code>**gras**</code><span>Mot appuyé</span></div>
+        <div class="syntax-row"><code>==surbrillance==</code><span>Passage à ne pas manquer</span></div>
+        <div class="syntax-row"><code>_italique_</code><span>Nuance, aparté</span></div>
+        <div class="syntax-row"><code>(2s)</code><span>Pause chronométrée, non prononcée</span></div>
+        <div class="syntax-row"><code>[[note]]</code><span>Consigne de jeu, non prononcée</span></div>
+      </div>
+
+      <div class="rendered">
+        <span class="section-title">Ouverture</span>
+        Mesdames, messieurs, bonsoir.
+        <span class="insert insert-pause">pause 2s</span>
+        <span class="insert insert-note">balayer la salle du regard</span>
+        Je voudrais commencer par une <span class="bold">évidence</span> que nous
+        avons collectivement oubliée : la technique n'est
+        <span class="mark">jamais neutre</span>.
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Ce qui ne quitte pas la machine</p>
+      <h2>Votre voix reste chez vous.</h2>
+    </div>
+
+    <div class="claims">
+      <div class="claim">
+        <h3>Reconnaissance hors ligne</h3>
+        <p>
+          Vosk tourne en local, sans clé d'API et sans réseau. C'est aussi ce qui
+          le fait fonctionner dans l'application de bureau, là où la reconnaissance
+          du navigateur échoue faute d'accès au service distant.
+        </p>
+      </div>
+      <div class="claim">
+        <h3>Polices servies par l'application</h3>
+        <p>
+          Aucune requête vers un service de polices. L'affichage doit tenir hors
+          ligne comme l'écoute — une salle n'a pas toujours de réseau, et un
+          prompteur n'a pas le droit d'attendre.
+        </p>
+      </div>
+      <div class="claim">
+        <h3>Aucune assistance rédactionnelle</h3>
+        <p>
+          Écrire un discours se fait très bien avec l'outil d'écriture qu'on a
+          déjà. L'embarquer ici aurait ajouté une clé à gérer, une dépendance
+          réseau et une réserve dans la politique de confidentialité. Souffleur
+          suit la voix dans un texte, et rien d'autre.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="ribbon-rule">
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Plateformes</p>
+      <h2>Où il tourne, et où il n'en est pas encore là.</h2>
+    </div>
+
+    <table class="platforms">
+      <tbody>
+        <tr>
+          <td>macOS <span style="color:var(--ink-faint)">Apple Silicon</span></td>
+          <td><span class="state ready">Livré</span></td>
+          <td>Image disque, signature ad hoc</td>
+        </tr>
+        <tr>
+          <td>Windows <span style="color:var(--ink-faint)">x64</span></td>
+          <td><span class="state ready">Livré</span></td>
+          <td>Installateur, choix du dossier</td>
+        </tr>
+        <tr>
+          <td>Linux <span style="color:var(--ink-faint)">x64 · arm64</span></td>
+          <td><span class="state ready">Livré</span></td>
+          <td>AppImage, rien à installer</td>
+        </tr>
+        <tr>
+          <td>Android</td>
+          <td><span class="state pending">À compiler</span></td>
+          <td>Projet généré, micro et écran réglés. La reconnaissance hors ligne reste à vérifier sur un téléphone réel.</td>
+        </tr>
+        <tr>
+          <td>iOS</td>
+          <td><span class="state pending">Écarté</span></td>
+          <td>Repoussé : compte développeur à 99 $/an. La couche d'abstraction du moteur vocal existe déjà.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="build">
+      <p class="eyebrow" style="margin-bottom:14px">Construire depuis les sources</p>
+<pre><span class="c"># l'application, dans le navigateur</span>
+npm install
+npm run dev
+
+<span class="c"># l'application de bureau</span>
+npm run <span class="p">app</span>
+
+<span class="c"># les paquets</span>
+npm run <span class="p">dmg</span>        <span class="c">macOS</span>
+npm run <span class="p">windows</span>    <span class="c">installateur Windows</span>
+npm run <span class="p">linux</span>      <span class="c">AppImage</span>
+
+<span class="c"># les mesures ci-dessus, rejouées chez vous</span>
+npm test
+npm run <span class="p">bench</span></pre>
+    </div>
+  </section>
+
+  <footer>
+    <span class="ribbon-mark" aria-hidden="true"></span>
+    <span>Souffleur 0.1.0</span>
+    <span>Aucune dépendance d'exécution, aucune étape de compilation</span>
+    <span style="margin-left:auto">Charte « encre et ruban »</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var script = document.getElementById('script');
+  if (!script) return;
+
+  var mots = Array.prototype.slice.call(script.querySelectorAll('[data-i]'));
+  if (!mots.length) return;
+
+  // Deux mots que la lecture laissera derrière elle : l'un escamoté, l'autre
+  // dit de travers. C'est ce que l'application souligne, et elle continue.
+  var MANQUES = { 16: true, 26: true };
+
+  var elapsed = document.getElementById('t-elapsed');
+  var left = document.getElementById('t-left');
+  var wpm = document.getElementById('t-wpm');
+  var progress = document.getElementById('t-progress');
+  var bar = document.getElementById('t-bar');
+
+  var immobile = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (immobile) return;   // l'état au repos dit déjà tout
+
+  var curseur = 12;
+  var seconde = 11;
+  var debits = [138, 142, 145, 141, 136, 144];
+
+  function horloge(total) {
+    var m = Math.floor(total / 60), s = Math.round(total % 60);
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function peindre() {
+    for (var k = 0; k < mots.length; k++) {
+      var i = Number(mots[k].dataset.i);
+      var lu = i < curseur;
+      mots[k].classList.toggle('said', lu);
+      mots[k].classList.toggle('current', i === curseur);
+      mots[k].classList.toggle('missed', lu && !!MANQUES[i]);
+    }
+    var part = Math.min(1, (curseur + 1) / 84);   // le texte continue hors cadre
+    progress.textContent = Math.round(part * 100) + ' %';
+    bar.style.width = (part * 100) + '%';
+    elapsed.textContent = horloge(seconde);
+    left.textContent = horloge(Math.max(0, 273 - seconde * 2.1));
+    wpm.textContent = debits[curseur % debits.length];
+  }
+
+  function avancer() {
+    curseur++;
+    seconde += 0.42;
+    if (curseur > 31) {           // on repart du début, comme une répétition
+      curseur = -1;
+      seconde = 0;
+    }
+    peindre();
+  }
+
+  peindre();
+  var minuterie = setInterval(avancer, 420);
+
+  // Une page qu'on ne regarde pas n'a pas besoin de répéter.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      clearInterval(minuterie);
+      minuterie = null;
+    } else if (!minuterie) {
+      minuterie = setInterval(avancer, 420);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

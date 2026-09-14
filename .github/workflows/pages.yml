@@ -1,0 +1,56 @@
+# Publie la page de présentation sur GitHub Pages.
+#
+# Le site est un seul fichier autonome : aucune étape de construction, rien à
+# installer. On téléverse `site/` tel quel plutôt que de laisser Jekyll passer
+# dessus — d'où le `.nojekyll` qui l'accompagne.
+#
+# Le déclenchement écoute toutes les branches mais ne publie que depuis la
+# branche par défaut, comparée à l'exécution. Nommer la branche ici aurait
+# demandé de revenir modifier ce fichier le jour où elle change de nom.
+
+name: Page de présentation
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Une publication en cours va au bout : l'interrompre laisserait le site
+# à moitié remplacé.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publier:
+    # Rien n'est publié depuis une branche de travail.
+    if: github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier que la page est complète
+        # Une page vide se publie sans erreur : mieux vaut refuser ici.
+        run: |
+          test -f site/index.html || { echo "site/index.html est absent"; exit 1; }
+          grep -q '</html>' site/index.html || { echo "site/index.html est tronqué"; exit 1; }
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deploiement
+        uses: actions/deploy-pages@v4
