@@ -33,6 +33,7 @@
     "electron-builder": "^26.15.3"
   },
   "main": "electron/main.js",
+  "desktopName": "souffleur.desktop",
   "overrides": {
     "uuid": "^11.1.1"
   },
@@ -119,6 +120,7 @@
       "icon": "build/icon.png",
       "category": "Office",
       "maintainer": "Souffleur",
+      "syncDesktopName": true,
       "synopsis": "Téléprompteur qui suit la voix de l'orateur dans son texte"
     }
   }

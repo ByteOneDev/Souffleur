@@ -84,6 +84,23 @@ body {
 .controls { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); flex: none; }
 .controls .action { width: auto; margin: 0; padding: var(--space-2) var(--space-4); }
 
+/*
+ * Poignee de la fenetre de bureau.
+ *
+ * L'application n'a pas de barre de titre : elle serait une bande grise au
+ * dessus d'un ecran qui appartient au texte. Mais une fenetre sans barre de
+ * titre est une fenetre qu'on ne peut plus deplacer — le contenu web recoit la
+ * souris a sa place. C'est donc cette barre-ci qui devient la poignee.
+ *
+ * Tout ce qu'elle porte d'interactif doit en etre exclu, sans quoi un clic sur
+ * « Demarrer » deviendrait un deplacement de fenetre. Dans un navigateur
+ * ordinaire, ces deux proprietes ne font rien.
+ */
+.bar { -webkit-app-region: drag; app-region: drag; }
+.bar button, .bar input, .bar select, .bar .menu, .bar .picker {
+  -webkit-app-region: no-drag; app-region: no-drag;
+}
+
 /* --- Choix du texte ------------------------------------------------------- */
 
 .picker { position: relative; }
