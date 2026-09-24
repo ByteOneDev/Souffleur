@@ -15,7 +15,9 @@ import { availableEngines, createEngine } from '../stt/index.js';
 import { Library, countWords, estimateSeconds } from '../store/library.js';
 import { readTheme, applyTheme, saveTheme } from './theme.js';
 import { garderEcranAllume, libererEcran } from './wakelock.js';
-import { Recorder, fileName, clock as chrono } from '../audio/recorder.js';
+import { Recorder } from '../audio/recorder.js';
+import { fileName, clock } from '../store/naming.js';
+import { toMarkdown, toPrintableHtml } from '../script/export.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -66,11 +68,6 @@ const state = {
 };
 
 // --- Bibliotheque -----------------------------------------------------------
-
-const clock = (seconds) => {
-  const total = Math.max(0, Math.round(seconds));
-  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
-};
 
 function renderLibrary() {
   const filter = $('#filter').value.trim().toLowerCase();
@@ -366,7 +363,7 @@ function showRecording() {
   $('#record-ready').hidden = !prise;
   if (!prise) return;
   const megaoctets = prise.bytes / (1024 * 1024);
-  $('#record-info').textContent = `${chrono(prise.seconds)} · ${megaoctets.toFixed(1)} Mo `
+  $('#record-info').textContent = `${clock(prise.seconds)} · ${megaoctets.toFixed(1)} Mo `
     + `· ${prise.extension}. Elle reste sur cet appareil jusqu'à l'export, `
     + `et la prochaine lecture la remplace.`;
 }
@@ -404,26 +401,68 @@ async function arreterEnregistrement() {
 }
 
 /**
- * Remise du fichier a l'utilisateur.
+ * Remise d'un fichier a l'utilisateur.
  *
  * Un lien de telechargement plutot qu'une ecriture directe : c'est le seul
  * chemin qui vaut a la fois dans le navigateur et dans l'application de
  * bureau, ou il ouvre la fenetre d'enregistrement du systeme. L'application
  * n'a ainsi besoin d'aucun acces au disque.
  */
-function exporterEnregistrement() {
-  const prise = state.recorder?.recording;
-  if (!prise) return;
-  const url = URL.createObjectURL(prise.blob);
+function remettre(contenu, type, nom) {
+  const blob = contenu instanceof Blob ? contenu : new Blob([contenu], { type });
+  const url = URL.createObjectURL(blob);
   const lien = document.createElement('a');
   lien.href = url;
-  lien.download = fileName(state.recordedTitle, state.recordedAt ?? new Date(), prise.extension);
+  lien.download = nom;
   document.body.appendChild(lien);
   lien.click();
   lien.remove();
   // L'adresse d'objet retient le fichier en memoire tant qu'elle existe ; on
   // laisse au telechargement le temps de demarrer avant de la relacher.
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
+}
+
+function exporterEnregistrement() {
+  const prise = state.recorder?.recording;
+  if (!prise) return;
+  remettre(prise.blob, prise.mime,
+    fileName(state.recordedTitle, state.recordedAt ?? new Date(), prise.extension));
+}
+
+// --- Export du texte --------------------------------------------------------
+
+/**
+ * Le script s'en va sous deux formes.
+ *
+ * Le Markdown est la forme portable : elle s'ouvre partout et revient ici sans
+ * perdre une annotation. La page HTML est la forme imprimable : elle passe par
+ * le meme decoupage en fragments que le prompteur, donc elle montre exactement
+ * ce qu'on lit.
+ *
+ * Le texte est relu depuis le champ plutot que pris dans l'etat : en edition,
+ * ce qui vient d'etre tape n'a pas encore ete reconstruit, et on exporterait
+ * la version d'avant.
+ */
+function exporterTexte(format) {
+  const source = $('#source').value;
+  const titre = $('#title').value;
+  const date = new Date();
+  const nom = fileName(titre, date, format);
+
+  if (format === 'md') {
+    return remettre(toMarkdown(source), 'text/markdown;charset=utf-8', nom);
+  }
+  const script = parseScript(source);
+  remettre(
+    toPrintableHtml(script, tokenize(script.spoken), {
+      title: titre,
+      date,
+      words: countWords(source),
+      seconds: estimateSeconds(source),
+    }),
+    'text/html;charset=utf-8',
+    nom,
+  );
 }
 
 // --- Lecture et edition -----------------------------------------------------
@@ -614,6 +653,8 @@ function bind() {
     $('#record-hint').textContent = "Cet appareil n'expose pas d'enregistreur audio.";
   }
   $('#record-export').addEventListener('click', exporterEnregistrement);
+  $('#export-md').addEventListener('click', () => exporterTexte('md'));
+  $('#export-html').addEventListener('click', () => exporterTexte('html'));
 
   $('#font-size').addEventListener('input', (event) => {
     $('#prompter-view').style.fontSize = `${event.target.value}px`;
