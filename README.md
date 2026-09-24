@@ -76,7 +76,7 @@ reprises, avec une pénalité réduite sur les mots hors texte).
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # 61 tests
+npm test        # 78 tests
 npm run bench   # tableau de qualité de l'alignement
 node test/stress.js   # recherche du point de rupture
 ```
@@ -156,6 +156,25 @@ l'export passe par un lien de téléchargement, donc l'application n'a besoin
 d'aucun accès au disque. La prise reste en mémoire jusqu'à l'export, et la
 lecture suivante la remplace.
 
+## Exporter le texte
+
+Deux sorties, deux usages.
+
+**Markdown** est la forme portable : le fichier s'ouvre dans n'importe quel
+éditeur, et il revient dans Souffleur *sans perdre une annotation*. C'est
+pourquoi rien n'y est ajouté — ni en-tête, ni métadonnées. L'analyseur ne
+connaît pas de syntaxe de commentaire : la moindre ligne ajoutée reviendrait
+comme du texte à prononcer. Le titre et la date vivent donc dans le nom du
+fichier, où ils ne gênent personne.
+
+**La page imprimable** passe par le même découpage en fragments que le
+prompteur : elle montre exactement ce qu'on lit, gras, surbrillances, pauses
+et consignes de jeu compris. Elle est autonome — aucune feuille de style ni
+police à aller chercher — et porte une feuille d'impression : marges pour le
+pouce, et repères de structure qui ne se retrouvent pas seuls en bas de page.
+On l'imprime pour poser le script sur le pupitre, ou on l'envoie à quelqu'un
+qui n'a pas le logiciel.
+
 ## Bibliothèque
 
 Un orateur ne prépare pas un texte mais plusieurs, et il y revient : la
@@ -171,9 +190,9 @@ corrompu ou refusé n'empêche jamais d'ouvrir l'application.
 ```
 src/align/    normalisation FR, phonétique, similarité, moteur d'alignement
 src/audio/    enregistrement de la voix et export du fichier
-src/script/   analyse des annotations et rendu du prompteur
+src/script/   analyse des annotations, rendu du prompteur, export du texte
 src/stt/      adaptateurs de moteurs vocaux + simulateur de lecture
-src/store/    bibliothèque des discours (stockage injecté)
+src/store/    bibliothèque des discours (stockage injecté), nommage des fichiers
 src/ui/       charte, thèmes, polices, assemblage de l'interface
 test/         tests, banc de mesure et test de rupture
 tools/        banc de vérification de Vosk sur un appareil Android
@@ -252,7 +271,8 @@ rien d'autre.
 
 Fait : le moteur d'alignement et ses mesures, le prompteur avec annotations,
 chronométrage, la bascule lecture / édition, la bibliothèque de discours,
-l'enregistrement de la voix et son export, la charte graphique en deux thèmes,
+l'enregistrement de la voix et son export, l'export du texte en Markdown et en
+page imprimable, la charte graphique en deux thèmes,
 l'application de bureau — livrée en .dmg, installateur Windows et AppImage —
 et le projet Android.
 
