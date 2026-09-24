@@ -187,3 +187,49 @@ test('jeter la prise remet l enregistreur a neuf', async () => {
   assert.equal(recorder.recording, null);
   assert.equal(recorder.seconds, 0);
 });
+
+// --- Le micro ne doit jamais rester ouvert pour rien -------------------------
+
+test('un encodeur qui refuse a la construction referme le micro', async () => {
+  const flux = fauxFlux();
+  const recorder = new Recorder({
+    openStream: async () => flux,
+    Encoder: class { constructor() { throw new Error('format refuse'); } },
+    isSupported: () => true,
+  });
+
+  await assert.rejects(() => recorder.start(), /format refuse/);
+  assert.equal(flux.piste.arretee, true, 'la piste doit etre coupee');
+  assert.equal(recorder.stream, null);
+  assert.equal(recorder.state, 'idle');
+});
+
+test('un encodeur qui refuse de demarrer referme le micro', async () => {
+  const flux = fauxFlux();
+  const recorder = new Recorder({
+    openStream: async () => flux,
+    Encoder: class { start() { throw new Error('demarrage refuse'); } },
+    isSupported: () => true,
+  });
+
+  await assert.rejects(() => recorder.start(), /demarrage refuse/);
+  assert.equal(flux.piste.arretee, true, 'la piste doit etre coupee');
+  assert.equal(recorder.state, 'idle');
+  assert.equal(recorder.encoder, null);
+});
+
+test('jeter la prise referme le micro, meme reste ouvert', async () => {
+  const flux = fauxFlux();
+  const recorder = new Recorder({
+    openStream: async () => flux,
+    Encoder: FauxEncodeur,
+    isSupported: () => true,
+  });
+
+  await recorder.start();
+  // On jette sans passer par stop() : c'est ce que fait l'interface quand le
+  // demarrage a mal tourne.
+  recorder.discard();
+  assert.equal(flux.piste.arretee, true, 'discard doit couper la prise de son');
+  assert.equal(recorder.state, 'idle');
+});

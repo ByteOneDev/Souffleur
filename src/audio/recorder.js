@@ -114,15 +114,28 @@ export class Recorder {
     this.recording = null;
     this.stream = await this.openStream();
 
-    const encoder = new this.Encoder(this.stream, { mimeType: format.mime });
-    encoder.ondataavailable = (event) => {
-      if (event?.data?.size) this.chunks.push(event.data);
-    };
-    this.encoder = encoder;
-    this.startedAt = this.now();
-    // Un bloc par seconde plutot qu'un seul a la fin : si la page disparait en
-    // route — onglet tue, application fermee — ce qui est deja decoupe existe.
-    encoder.start(1000);
+    /*
+     * Passe cette ligne, le micro ecoute. Tout ce qui echoue ensuite doit donc
+     * le refermer avant de propager : un encodeur qui refuse le format laissait
+     * sinon la prise de son ouverte, sans enregistrement et sans temoin a
+     * l'ecran — un micro allume que plus rien ne signale ni ne referme.
+     */
+    try {
+      const encoder = new this.Encoder(this.stream, { mimeType: format.mime });
+      encoder.ondataavailable = (event) => {
+        if (event?.data?.size) this.chunks.push(event.data);
+      };
+      this.encoder = encoder;
+      this.startedAt = this.now();
+      // Un bloc par seconde plutot qu'un seul a la fin : si la page disparait
+      // en route — onglet tue, application fermee — ce qui est decoupe existe.
+      encoder.start(1000);
+    } catch (error) {
+      this.closeStream();
+      this.encoder = null;
+      this.state = 'idle';
+      throw error;
+    }
     this.state = 'recording';
   }
 
@@ -162,10 +175,16 @@ export class Recorder {
     this.stream = null;
   }
 
-  /** Oublie la prise courante. Le micro, lui, est deja ferme. */
+  /**
+   * Oublie la prise courante et coupe la prise de son si elle est restee
+   * ouverte. On ne suppose pas qu'elle est deja fermee : c'est justement
+   * quand quelque chose a mal tourne qu'on appelle cette methode.
+   */
   discard() {
+    this.closeStream();
     this.recording = null;
     this.chunks = [];
+    this.encoder = null;
     this.state = 'idle';
   }
 }

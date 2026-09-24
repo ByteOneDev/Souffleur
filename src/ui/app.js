@@ -58,6 +58,7 @@ const state = {
   wordElements: [],
   recorder: null,
   recordedAt: null,
+  recordedTitle: '',
   canRecord: false,
   lastPainted: -2,
   lastRevision: -1,
@@ -301,13 +302,29 @@ async function start() {
   updateStats();
 }
 
+/**
+ * L'arret n'est pas instantane : fermer un enregistrement demande d'attendre
+ * le dernier bloc, et fermer un moteur vocal prend aussi son temps.
+ *
+ * Pendant ces quelques centaines de millisecondes, un second clic partait
+ * relancer une lecture — et l'arret, en reprenant, fermait le moteur tout neuf
+ * qu'il venait de trouver a la place de l'ancien. On garde donc le moteur a
+ * fermer de cote, et le bouton se desactive au lieu d'avaler le clic sans rien
+ * dire.
+ */
 async function stop() {
   if (!state.running) return;
   state.running = false;
-  await arreterEnregistrement();
-  await libererEcran();
-  await state.engine?.stop();
+  const engine = state.engine;
   state.engine = null;
+  $('#toggle').disabled = true;
+  try {
+    await arreterEnregistrement();
+    await libererEcran();
+    await engine?.stop();
+  } finally {
+    $('#toggle').disabled = false;
+  }
   $('#toggle').textContent = 'Démarrer';
   $('#mode').disabled = false;
   $('#record').disabled = !state.canRecord;
@@ -372,8 +389,14 @@ async function arreterEnregistrement() {
   if (state.recorder?.state !== 'recording') return;
   try {
     await state.recorder.stop();
-    // L'heure de la prise, pas celle de l'export : on peut exporter le lendemain.
+    /*
+     * On retient l'heure ET le titre au moment de la prise, pas a l'export :
+     * entre les deux, l'orateur peut ouvrir un autre texte — la bibliotheque
+     * laisse volontairement l'enregistrement en place — et le fichier serait
+     * alors parti sous le nom du texte qu'on regarde, pas de celui qu'on a lu.
+     */
     state.recordedAt = new Date();
+    state.recordedTitle = $('#title').value;
   } catch (error) {
     $('#message').textContent = `Enregistrement interrompu : ${error.message}`;
   }
@@ -394,7 +417,7 @@ function exporterEnregistrement() {
   const url = URL.createObjectURL(prise.blob);
   const lien = document.createElement('a');
   lien.href = url;
-  lien.download = fileName($('#title').value, state.recordedAt ?? new Date(), prise.extension);
+  lien.download = fileName(state.recordedTitle, state.recordedAt ?? new Date(), prise.extension);
   document.body.appendChild(lien);
   lien.click();
   lien.remove();
