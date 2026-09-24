@@ -15,6 +15,7 @@ import { availableEngines, createEngine } from '../stt/index.js';
 import { Library, countWords, estimateSeconds } from '../store/library.js';
 import { readTheme, applyTheme, saveTheme } from './theme.js';
 import { garderEcranAllume, libererEcran } from './wakelock.js';
+import { Recorder, fileName, clock as chrono } from '../audio/recorder.js';
 
 const $ = (selector) => document.querySelector(selector);
 
@@ -55,6 +56,9 @@ const state = {
   startedAt: null,
   targetSeconds: 0,
   wordElements: [],
+  recorder: null,
+  recordedAt: null,
+  canRecord: false,
   lastPainted: -2,
   lastRevision: -1,
   saveTimer: null,
@@ -284,11 +288,15 @@ async function start() {
   state.engine = engine;
   state.running = true;
   state.startedAt = Date.now();
+  await demarrerEnregistrement();
   // Sur telephone comme sur portable, l'ecran ne doit pas s'eteindre en plein
   // discours parce que personne n'a touche le clavier depuis deux minutes.
   garderEcranAllume();
   $('#toggle').textContent = 'Arrêter';
   $('#mode').disabled = true;
+  // Le choix d'enregistrer se fait avant de parler : le revenir en route
+  // laisserait une prise coupee en deux sans que rien ne le dise.
+  $('#record').disabled = true;
   document.body.classList.add('running');
   updateStats();
 }
@@ -296,13 +304,103 @@ async function start() {
 async function stop() {
   if (!state.running) return;
   state.running = false;
+  await arreterEnregistrement();
   await libererEcran();
   await state.engine?.stop();
   state.engine = null;
   $('#toggle').textContent = 'Démarrer';
   $('#mode').disabled = false;
+  $('#record').disabled = !state.canRecord;
   document.body.classList.remove('running');
   updateStats();
+}
+
+// --- Enregistrement ---------------------------------------------------------
+
+/**
+ * L'enregistrement prend sa propre prise de son.
+ *
+ * Celle du suivi appartient au moteur vocal, qui la consomme et ne la rend
+ * pas. On garde la suppression de bruit — une salle n'est jamais silencieuse —
+ * mais on coupe la correction automatique de gain : elle aplatit les nuances,
+ * et ce sont elles qu'on vient reecouter.
+ */
+const ouvrirMicro = () => navigator.mediaDevices.getUserMedia({
+  audio: {
+    channelCount: 1,
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: false,
+  },
+});
+
+const creerEnregistreur = () => new Recorder({
+  openStream: ouvrirMicro,
+  Encoder: globalThis.MediaRecorder,
+  isSupported: (mime) => globalThis.MediaRecorder?.isTypeSupported?.(mime) ?? false,
+});
+
+/** Temoin dans la barre, et etat de la section du panneau de reglages. */
+function showRecording() {
+  const enregistreur = state.recorder;
+  $('#rec').hidden = enregistreur?.state !== 'recording';
+
+  const prise = enregistreur?.recording;
+  $('#record-ready').hidden = !prise;
+  if (!prise) return;
+  const megaoctets = prise.bytes / (1024 * 1024);
+  $('#record-info').textContent = `${chrono(prise.seconds)} · ${megaoctets.toFixed(1)} Mo `
+    + `· ${prise.extension}. Elle reste sur cet appareil jusqu'à l'export, `
+    + `et la prochaine lecture la remplace.`;
+}
+
+async function demarrerEnregistrement() {
+  if (!$('#record').checked) return;
+  state.recorder ??= creerEnregistreur();
+  try {
+    await state.recorder.start();
+  } catch (error) {
+    // L'enregistrement est un supplement : le rater ne doit pas empecher de
+    // parler. On le dit, et la lecture continue sans lui.
+    $('#message').textContent = `Enregistrement impossible : ${error.message}`;
+    state.recorder.discard();
+  }
+  showRecording();
+}
+
+async function arreterEnregistrement() {
+  if (state.recorder?.state !== 'recording') return;
+  try {
+    await state.recorder.stop();
+    // L'heure de la prise, pas celle de l'export : on peut exporter le lendemain.
+    state.recordedAt = new Date();
+  } catch (error) {
+    $('#message').textContent = `Enregistrement interrompu : ${error.message}`;
+  }
+  showRecording();
+}
+
+/**
+ * Remise du fichier a l'utilisateur.
+ *
+ * Un lien de telechargement plutot qu'une ecriture directe : c'est le seul
+ * chemin qui vaut a la fois dans le navigateur et dans l'application de
+ * bureau, ou il ouvre la fenetre d'enregistrement du systeme. L'application
+ * n'a ainsi besoin d'aucun acces au disque.
+ */
+function exporterEnregistrement() {
+  const prise = state.recorder?.recording;
+  if (!prise) return;
+  const url = URL.createObjectURL(prise.blob);
+  const lien = document.createElement('a');
+  lien.href = url;
+  lien.download = fileName($('#title').value, state.recordedAt ?? new Date(), prise.extension);
+  document.body.appendChild(lien);
+  lien.click();
+  lien.remove();
+  // L'adresse d'objet retient le fichier en memoire tant qu'elle existe ; on
+  // laisse au telechargement le temps de demarrer avant de la relacher.
+  setTimeout(() => URL.revokeObjectURL(url), 30_000);
 }
 
 // --- Lecture et edition -----------------------------------------------------
@@ -483,6 +581,16 @@ function bind() {
   $('#engine').addEventListener('change', (event) => {
     $('#model-row').hidden = event.target.value !== 'vosk';
   });
+
+  // Un appareil sans enregistreur le dit tout de suite, plutot que de laisser
+  // cocher une case qui ne fera rien au moment ou l'on parle.
+  state.canRecord = creerEnregistreur().available;
+  if (!state.canRecord) {
+    $('#record').checked = false;
+    $('#record').disabled = true;
+    $('#record-hint').textContent = "Cet appareil n'expose pas d'enregistreur audio.";
+  }
+  $('#record-export').addEventListener('click', exporterEnregistrement);
 
   $('#font-size').addEventListener('input', (event) => {
     $('#prompter-view').style.fontSize = `${event.target.value}px`;
