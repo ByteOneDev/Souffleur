@@ -44,6 +44,13 @@ jobs:
           java-version: '21'
 
       - uses: android-actions/setup-android@v3
+        with:
+          # L'action installe « tools » par defaut : un paquet obsolete, retire
+          # du depot Android, qui fait echouer l'etape depuis que l'image du
+          # runner a change. Le SDK de l'image porte deja platform-tools, et le
+          # greffon Gradle telecharge lui-meme la plateforme et les build-tools
+          # dont le projet a besoin.
+          packages: ''
 
       - name: Dépendances et ressources
         run: npm ci
