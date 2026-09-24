@@ -76,7 +76,7 @@ reprises, avec une pénalité réduite sur les mots hors texte).
 ```bash
 npm install
 npm run dev     # http://localhost:5173
-npm test        # 39 tests
+npm test        # 61 tests
 npm run bench   # tableau de qualité de l'alignement
 node test/stress.js   # recherche du point de rupture
 ```
@@ -135,6 +135,27 @@ monospace, et lire vite est le métier d'un prompteur. Le texte s'affiche donc
 par défaut dans une police de lecture, avec la machine à écrire disponible en
 un clic pour qui préfère l'identité complète.
 
+## Enregistrer sa voix
+
+Une case dans les réglages, et la lecture est enregistrée ; un bouton, et le
+fichier part dans le dossier de téléchargement, nommé d'après le texte et
+l'heure de la prise.
+
+**L'enregistrement prend sa propre prise de son**, séparée de celle du suivi.
+Ce n'est pas un gaspillage : le flux du suivi appartient au moteur vocal, qui
+le consomme sans le rendre — Vosk ouvre le sien, Web Speech ne rend jamais le
+sien, la simulation n'en a pas. Une prise distincte donne un seul chemin de
+code quel que soit le moteur, et permet d'enregistrer même en simulation.
+
+La suppression de bruit est conservée, la correction automatique de gain est
+coupée : elle aplatit les nuances, et ce sont elles qu'on vient réécouter.
+
+Le format suit ce que l'appareil sait encoder — Opus dans WebM sur Chromium,
+dans Ogg sur Firefox, MP4 sur Safari. Le fichier ne quitte pas la machine :
+l'export passe par un lien de téléchargement, donc l'application n'a besoin
+d'aucun accès au disque. La prise reste en mémoire jusqu'à l'export, et la
+lecture suivante la remplace.
+
 ## Bibliothèque
 
 Un orateur ne prépare pas un texte mais plusieurs, et il y revient : la
@@ -149,6 +170,7 @@ corrompu ou refusé n'empêche jamais d'ouvrir l'application.
 
 ```
 src/align/    normalisation FR, phonétique, similarité, moteur d'alignement
+src/audio/    enregistrement de la voix et export du fichier
 src/script/   analyse des annotations et rendu du prompteur
 src/stt/      adaptateurs de moteurs vocaux + simulateur de lecture
 src/store/    bibliothèque des discours (stockage injecté)
@@ -229,9 +251,10 @@ rien d'autre.
 ## État et suite
 
 Fait : le moteur d'alignement et ses mesures, le prompteur avec annotations,
-chronométrage, la bascule lecture / édition, la bibliothèque de discours, la
-charte graphique en deux thèmes, l'application de bureau — livrée en .dmg,
-installateur Windows et AppImage — et le projet Android.
+chronométrage, la bascule lecture / édition, la bibliothèque de discours,
+l'enregistrement de la voix et son export, la charte graphique en deux thèmes,
+l'application de bureau — livrée en .dmg, installateur Windows et AppImage —
+et le projet Android.
 
 Ouvert : **Vosk n'est pas encore vérifié sur un téléphone réel** — c'est le seul
 risque restant. Le banc `tools/android-check.html` le tranche en cinq minutes,

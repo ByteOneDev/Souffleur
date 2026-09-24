@@ -330,6 +330,54 @@ tbody tr.keyrow td:first-child { color: var(--ribbon); }
   border-bottom: var(--border); padding-bottom: 8px; margin-bottom: 16px;
 }
 
+/* --- Enregistrement -------------------------------------------------------- */
+
+.record { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 28px; align-items: start; }
+
+/*
+ * Une reproduction du panneau, pas une capture : elle suit le theme du
+ * lecteur, reste nette a tout agrandissement, et se lit a la voix.
+ */
+figure.mock { margin: 0; }
+.mock-panel {
+  border: var(--border-strong); border-radius: var(--radius);
+  background: var(--surface); padding: 20px;
+}
+.mock-head {
+  font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-label);
+  color: var(--ink-faint); margin: 0 0 16px;
+}
+.mock-check { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink); }
+.mock-check .box {
+  width: 14px; height: 14px; flex: none;
+  border: 1px solid var(--ribbon); border-radius: var(--radius-sm);
+  background: var(--ribbon); position: relative;
+}
+.mock-check .box::after {
+  content: ''; position: absolute; left: 4px; top: 1px;
+  width: 4px; height: 8px;
+  border: solid var(--on-accent); border-width: 0 2px 2px 0;
+  transform: rotate(42deg);
+}
+.mock-meta {
+  margin: 16px 0 0; font-size: 12px; color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+.mock-button {
+  margin-top: 10px; padding: 10px 12px; text-align: center;
+  border: var(--border-strong); border-radius: var(--radius);
+  background: var(--surface-sunk); color: var(--ink);
+  font-size: 13px; font-weight: 500;
+}
+figure.mock figcaption {
+  margin-top: 12px; font-size: 11px; color: var(--ink-faint); line-height: 1.5;
+}
+
+.record-notes { display: flex; flex-direction: column; gap: 22px; }
+.record-note { border-top: var(--border-strong); padding-top: 14px; }
+.record-note h3 { font-size: 17px; margin-bottom: 7px; }
+.record-note p { font-family: var(--font-read); font-size: 15.5px; line-height: 1.58; color: var(--ink-soft); }
+
 /* --- Confidentialité ------------------------------------------------------ */
 
 .claims { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; }
@@ -594,6 +642,60 @@ footer {
         Je voudrais commencer par une <span class="bold">évidence</span> que nous
         avons collectivement oubliée : la technique n'est
         <span class="mark">jamais neutre</span>.
+      </div>
+    </div>
+  </section>
+
+  <hr class="ribbon-rule">
+
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Enregistrer sa voix</p>
+      <h2>Se réécouter, sans rien installer de plus.</h2>
+      <p class="prose">
+        Une case dans les réglages, et la lecture est enregistrée. Un bouton, et
+        le fichier part — nommé d'après le texte et l'heure de la prise, parce
+        qu'on répète le même discours plusieurs fois et qu'une deuxième prise ne
+        doit pas écraser la première.
+      </p>
+    </div>
+
+    <div class="record">
+      <figure class="mock">
+        <div class="mock-panel" aria-hidden="true">
+          <p class="mock-head">Réglages · Enregistrement</p>
+          <span class="mock-check"><span class="box"></span> Enregistrer ma voix</span>
+          <p class="mock-meta">03:07 · 3,3 Mo · webm</p>
+          <div class="mock-button">Exporter l'enregistrement</div>
+        </div>
+        <figcaption>Le panneau après une lecture de trois minutes.</figcaption>
+      </figure>
+
+      <div class="record-notes">
+        <div class="record-note">
+          <h3>Une prise de son à part</h3>
+          <p>
+            Le flux du suivi appartient au moteur vocal, qui le consomme sans le
+            rendre. L'enregistrement ouvre donc le sien : un seul comportement,
+            quel que soit le moteur choisi.
+          </p>
+        </div>
+        <div class="record-note">
+          <h3>Les nuances sont gardées</h3>
+          <p>
+            La suppression de bruit reste active — une salle n'est jamais
+            silencieuse — mais la correction automatique de gain est coupée :
+            elle aplatit le relief de la voix, et c'est lui qu'on vient
+            réécouter.
+          </p>
+        </div>
+        <div class="record-note">
+          <h3>Le fichier reste à vous</h3>
+          <p>
+            L'export passe par un téléchargement ordinaire, donc l'application
+            n'a besoin d'aucun accès au disque. Rien n'est envoyé nulle part.
+          </p>
+        </div>
       </div>
     </div>
   </section>

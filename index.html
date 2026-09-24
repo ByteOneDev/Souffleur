@@ -22,6 +22,9 @@
     <div class="tracking" id="status" data-mode="idle">
       <span class="dot"></span><span class="label" id="status-label">à l'arrêt</span>
     </div>
+    <div class="rec" id="rec" hidden>
+      <span class="dot"></span><span class="label">enregistre</span>
+    </div>
   </div>
 
   <div class="controls">
@@ -97,6 +100,19 @@
     <div id="model-row" hidden>
       <label for="model-url">Modèle Vosk</label>
       <input type="text" id="model-url" value="models/vosk-model-small-fr-0.22.zip">
+    </div>
+  </section>
+
+  <section>
+    <h3>Enregistrement</h3>
+    <label class="check"><input type="checkbox" id="record"> Enregistrer ma voix</label>
+    <p class="hint" id="record-hint">
+      La prise de son est séparée du suivi : elle ne change rien à la
+      reconnaissance. L'enregistrement reste sur cet appareil.
+    </p>
+    <div id="record-ready" hidden>
+      <p class="hint" id="record-info"></p>
+      <button class="action" id="record-export">Exporter l'enregistrement</button>
     </div>
   </section>
 
